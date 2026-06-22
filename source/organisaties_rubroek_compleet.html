@@ -1,0 +1,205 @@
+
+<style>
+  body-wrap { padding: 1rem 0; }
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+  .filter-btn { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1.5px solid; cursor: pointer; background: transparent; transition: all .15s; }
+  .filter-btn.active { color: #fff !important; }
+  .fb-all    { border-color: #ccc; color: #555; }
+  .fb-all.active { background: #555; }
+  .fb-winkel    { border-color: #EF9F27; color: #854F0B; }
+  .fb-winkel.active { background: #EF9F27; }
+  .fb-zorg      { border-color: #1D9E75; color: #0F6E56; }
+  .fb-zorg.active { background: #1D9E75; }
+  .fb-bedrijf   { border-color: #D85A30; color: #993C1D; }
+  .fb-bedrijf.active { background: #D85A30; }
+  .fb-onderwijs { border-color: #378ADD; color: #185FA5; }
+  .fb-onderwijs.active { background: #378ADD; }
+  .fb-buurt     { border-color: #7F77DD; color: #534AB7; }
+  .fb-buurt.active { background: #7F77DD; }
+  @media (prefers-color-scheme: dark) {
+    .fb-winkel { color: #FAC775; } .fb-zorg { color: #9FE1CB; }
+    .fb-bedrijf { color: #F5C4B3; } .fb-onderwijs { color: #B5D4F4; }
+    .fb-buurt { color: #CECBF6; }
+  }
+  .section { margin-bottom: 28px; }
+  .section-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; }
+  .sh-winkel    { background: #FAEEDA; border: 0.5px solid #EF9F27; }
+  .sh-winkel .st { color: #633806; }
+  .sh-zorg      { background: #E1F5EE; border: 0.5px solid #5DCAA5; }
+  .sh-zorg .st  { color: #0F6E56; }
+  .sh-bedrijf   { background: #FAECE7; border: 0.5px solid #D85A30; }
+  .sh-bedrijf .st { color: #4A1B0C; }
+  .sh-onderwijs { background: #E6F1FB; border: 0.5px solid #378ADD; }
+  .sh-onderwijs .st { color: #0C447C; }
+  .sh-buurt     { background: #EEEDFE; border: 0.5px solid #7F77DD; }
+  .sh-buurt .st { color: #3C3489; }
+  @media (prefers-color-scheme: dark) {
+    .sh-winkel { background: #412402; border-color: #FAC775; } .sh-winkel .st { color: #FAC775; }
+    .sh-zorg { background: #085041; border-color: #1D9E75; } .sh-zorg .st { color: #9FE1CB; }
+    .sh-bedrijf { background: #4A1B0C; border-color: #F0997B; } .sh-bedrijf .st { color: #F5C4B3; }
+    .sh-onderwijs { background: #042C53; border-color: #85B7EB; } .sh-onderwijs .st { color: #B5D4F4; }
+    .sh-buurt { background: #26215C; border-color: #AFA9EC; } .sh-buurt .st { color: #CECBF6; }
+  }
+  .st { font-size: 14px; font-weight: 500; }
+  .count-badge { font-size: 11px; font-weight: 500; padding: 1px 7px; border-radius: 10px; background: rgba(0,0,0,0.08); color: #555; }
+  .org-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  @media (max-width: 500px) { .org-grid { grid-template-columns: 1fr; } }
+  .org-item { padding: 9px 12px; border-radius: 8px; border: 0.5px solid #e0e0e0; background: #f8f8f8; }
+  .org-name { font-size: 13px; font-weight: 500; color: #1a1a2e; line-height: 1.3; }
+  .org-type { font-size: 11px; color: #555; margin-top: 2px; }
+  .org-rating { font-size: 11px; color: #999; margin-top: 2px; }
+  .star { color: #EF9F27; }
+</style>
+
+<div style="padding: 1rem 0">
+  <div class="filter-bar">
+    <button class="filter-btn fb-all active" onclick="filter('all')">Alle</button>
+    <button class="filter-btn fb-winkel" onclick="filter('winkel')">🛍️ Winkels</button>
+    <button class="filter-btn fb-zorg" onclick="filter('zorg')">🏥 Zorg</button>
+    <button class="filter-btn fb-bedrijf" onclick="filter('bedrijf')">🏢 Bedrijven</button>
+    <button class="filter-btn fb-onderwijs" onclick="filter('onderwijs')">🎓 Onderwijs</button>
+    <button class="filter-btn fb-buurt" onclick="filter('buurt')">🏘️ Buurt/Jongeren</button>
+  </div>
+
+  <div class="section" data-cat="winkel">
+    <div class="section-header sh-winkel">
+      <span class="st">🛍️ Winkels</span>
+      <span class="count-badge">39</span>
+    </div>
+    <div class="org-grid">
+      <div class="org-item"><div class="org-name">Ezzo Restaurant</div><div class="org-type">Restaurant</div><div class="org-rating"><span class="star">★</span> 4.7 (528)</div></div>
+      <div class="org-item"><div class="org-name">Dirck3 Rotterdam Goudsesingel</div><div class="org-type">Slijterij</div><div class="org-rating"><span class="star">★</span> 4.8 (190)</div></div>
+      <div class="org-item"><div class="org-name">CurlyN</div><div class="org-type">Kapper</div><div class="org-rating"><span class="star">★</span> 5.0 (96)</div></div>
+      <div class="org-item"><div class="org-name">PHONE4ALL</div><div class="org-type">Telefoonreparatieservice</div><div class="org-rating"><span class="star">★</span> 4.5 (990)</div></div>
+      <div class="org-item"><div class="org-name">Burgers & Frites Noord</div><div class="org-type">Hamburgers</div><div class="org-rating"><span class="star">★</span> 4.4 (221)</div></div>
+      <div class="org-item"><div class="org-name">Carrabas speelgoed</div><div class="org-type">Speelgoedwinkel</div><div class="org-rating"><span class="star">★</span> 4.7 (222)</div></div>
+      <div class="org-item"><div class="org-name">New Joel Coffeehouse</div><div class="org-type">Espressobar</div><div class="org-rating"><span class="star">★</span> 4.9 (817)</div></div>
+      <div class="org-item"><div class="org-name">GSM Dokter</div><div class="org-type">Telefoonreparatieservice</div><div class="org-rating"><span class="star">★</span> 4.4 (1146)</div></div>
+      <div class="org-item"><div class="org-name">Used Products Rotterdam</div><div class="org-type">Tweedehandswinkel</div><div class="org-rating"><span class="star">★</span> 4.5 (74)</div></div>
+      <div class="org-item"><div class="org-name">MRM STYLE</div><div class="org-type">Kapper</div><div class="org-rating"><span class="star">★</span> 4.6 (382)</div></div>
+      <div class="org-item"><div class="org-name">Telecom</div><div class="org-type">Computerwinkel</div><div class="org-rating"><span class="star">★</span> 4.6 (165)</div></div>
+      <div class="org-item"><div class="org-name">Taco Mundo Rotterdam-Centrum</div><div class="org-type">Mexicaans restaurant</div><div class="org-rating"><span class="star">★</span> 3.8 (326)</div></div>
+      <div class="org-item"><div class="org-name">Café El Clasico</div><div class="org-type">Koffiehuis</div><div class="org-rating"><span class="star">★</span> 4.6</div></div>
+      <div class="org-item"><div class="org-name">Royal Meubel Boxspring Bedden C.</div><div class="org-type">Meubelwinkel</div><div class="org-rating"><span class="star">★</span> 4.4 (76)</div></div>
+      <div class="org-item"><div class="org-name">Mr. Sushi Rotterdam</div><div class="org-type">Sushi / afhaalrestaurant</div><div class="org-rating"><span class="star">★</span> 4.0 (391)</div></div>
+      <div class="org-item"><div class="org-name">Malic Tweewieiers</div><div class="org-type">Fietswinkel</div><div class="org-rating"><span class="star">★</span> 4.3 (381)</div></div>
+      <div class="org-item"><div class="org-name">Albert Heijn Goudsesingel</div><div class="org-type">Supermarkt</div><div class="org-rating"><span class="star">★</span> 3.5 (129)</div></div>
+      <div class="org-item"><div class="org-name">Avondwinkel Nightshop & Slijterij</div><div class="org-type">Avondwinkel</div><div class="org-rating">—</div></div>
+      <div class="org-item"><div class="org-name">SushiPoint Rotterdam</div><div class="org-type">Restaurant</div><div class="org-rating"><span class="star">★</span> 4.0 (241)</div></div>
+      <div class="org-item"><div class="org-name">Papa John's</div><div class="org-type">Afhaalzaak / pizza</div><div class="org-rating"><span class="star">★</span> 2.4 (222)</div></div>
+      <div class="org-item"><div class="org-name">La Perle S&S</div><div class="org-type">Modewinkel</div><div class="org-rating"><span class="star">★</span> 4.9 (24)</div></div>
+      <div class="org-item"><div class="org-name">Man Nam</div><div class="org-type">Restaurant</div><div class="org-rating"><span class="star">★</span> 4.4 (182)</div></div>
+      <div class="org-item"><div class="org-name">Kruidvat</div><div class="org-type">Drogist</div><div class="org-rating"><span class="star">★</span> 3.4 (91)</div></div>
+      <div class="org-item"><div class="org-name">Dirk Supermarkt Goudsesingel</div><div class="org-type">Supermarkt</div><div class="org-rating"><span class="star">★</span> 4.1 (282)</div></div>
+      <div class="org-item"><div class="org-name">Schoonenberg</div><div class="org-type">Audicien</div><div class="org-rating"><span class="star">★</span> 3.9 (44)</div></div>
+      <div class="org-item"><div class="org-name">Tabakshop Sjakie</div><div class="org-type">Tabakswinkel</div><div class="org-rating">—</div></div>
+      <div class="org-item"><div class="org-name">Albert Heijn</div><div class="org-type">Supermarkt</div><div class="org-rating"><span class="star">★</span> 3.8 (897)</div></div>
+      <div class="org-item"><div class="org-name">The Garage 39</div><div class="org-type">Barbershop / salon</div><div class="org-rating"><span class="star">★</span> 4.9 (152)</div></div>
+      <div class="org-item"><div class="org-name">Barbershop Excellent</div><div class="org-type">Barbershop</div><div class="org-rating"><span class="star">★</span> 4.8 (46)</div></div>
+      <div class="org-item"><div class="org-name">Café De Stoof</div><div class="org-type">Café</div><div class="org-rating"><span class="star">★</span> 4.8 (131)</div></div>
+      <div class="org-item"><div class="org-name">Sien Feng</div><div class="org-type">Chinees restaurant</div><div class="org-rating"><span class="star">★</span> 3.2 (207)</div></div>
+      <div class="org-item"><div class="org-name">Mobrigado</div><div class="org-type">Portugees restaurant</div><div class="org-rating"><span class="star">★</span> 4.8 (76)</div></div>
+      <div class="org-item"><div class="org-name">Duikwinkel Sub.Lub</div><div class="org-type">Duikwinkel</div><div class="org-rating">—</div></div>
+      <div class="org-item"><div class="org-name">Wildhandel Treuren</div><div class="org-type">Wild & gevogelte</div><div class="org-rating"><span class="star">★</span> 4.8 (210)</div></div>
+      <div class="org-item"><div class="org-name">Witgoed Outlet Rotterdam</div><div class="org-type">Elektronica winkel</div><div class="org-rating">—</div></div>
+      <div class="org-item"><div class="org-name">Vagabond Barbers 1</div><div class="org-type">Barbershop</div><div class="org-rating"><span class="star">★</span> 4.8 (412)</div></div>
+      <div class="org-item"><div class="org-name">Bean</div><div class="org-type">Lunchroom</div><div class="org-rating"><span class="star">★</span> 4.7 (230)</div></div>
+      <div class="org-item"><div class="org-name">Wong's Place</div><div class="org-type">Surinaams restaurant</div><div class="org-rating"><span class="star">★</span> 4.4 (871)</div></div>
+      <div class="org-item"><div class="org-name">Brood Rotterdam</div><div class="org-type">Bakker</div><div class="org-rating"><span class="star">★</span> 3.6 (213)</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-cat="zorg">
+    <div class="section-header sh-zorg">
+      <span class="st">🏥 Zorg</span>
+      <span class="count-badge">18</span>
+    </div>
+    <div class="org-grid">
+      <div class="org-item"><div class="org-name">Caressa Dierenziekenhuis Rotterdam</div><div class="org-type">Dierenarts</div><div class="org-rating"><span class="star">★</span> 4.1 (99)</div></div>
+      <div class="org-item"><div class="org-name">Apotheek Rotterdam</div><div class="org-type">Apotheek</div><div class="org-rating"><span class="star">★</span> 3.0 (6)</div></div>
+      <div class="org-item"><div class="org-name">Mondhygiëne Rotterdam</div><div class="org-type">Mondhygiënist</div><div class="org-rating"><span class="star">★</span> 4.9 (47)</div></div>
+      <div class="org-item"><div class="org-name">Bergweg Tandartsen</div><div class="org-type">Tandarts</div><div class="org-rating"><span class="star">★</span> 3.8 (13)</div></div>
+      <div class="org-item"><div class="org-name">Auris Audiologisch Centrum Rotterdam</div><div class="org-type">Medisch centrum</div><div class="org-rating"><span class="star">★</span> 4.0 (56)</div></div>
+      <div class="org-item"><div class="org-name">Zorgwereld</div><div class="org-type">Fysiotherapiepraktijk</div><div class="org-rating"><span class="star">★</span> 4.2 (61)</div></div>
+      <div class="org-item"><div class="org-name">Huisartsenpraktijk Özveren</div><div class="org-type">Medische kliniek</div><div class="org-rating"><span class="star">★</span> 3.2 (17)</div></div>
+      <div class="org-item"><div class="org-name">Apotheek Rubroek</div><div class="org-type">Apotheek</div><div class="org-rating"><span class="star">★</span> 5.0 (80)</div></div>
+      <div class="org-item"><div class="org-name">Tand-Art</div><div class="org-type">Tandarts</div><div class="org-rating"><span class="star">★</span> 3.8 (43)</div></div>
+      <div class="org-item"><div class="org-name">Tandartsenpraktijk A.W.K. Lieuw on.</div><div class="org-type">Tandarts</div><div class="org-rating"><span class="star">★</span> 5.0 (2)</div></div>
+      <div class="org-item"><div class="org-name">Bento Clinics</div><div class="org-type">Medische kliniek</div><div class="org-rating"><span class="star">★</span> 4.8 (70)</div></div>
+      <div class="org-item"><div class="org-name">VAN SCHAIK en BYRMAN Huisartsen</div><div class="org-type">Huisarts</div><div class="org-rating"><span class="star">★</span> 3.0 (41)</div></div>
+      <div class="org-item"><div class="org-name">Randstad Letselschade & Advies R.</div><div class="org-type">Advocaat / letselschade</div><div class="org-rating"><span class="star">★</span> 4.4 (87)</div></div>
+      <div class="org-item"><div class="org-name">SamenSterk zorg & adviesbureau</div><div class="org-type">Thuiszorg</div><div class="org-rating"><span class="star">★</span> 5.0 (2)</div></div>
+      <div class="org-item"><div class="org-name">Aafje Hoppesteyn — Zelfstandig wo.</div><div class="org-type">Ouderenzorg</div><div class="org-rating"><span class="star">★</span> 4.1 (11)</div></div>
+      <div class="org-item"><div class="org-name">Middin — De Kade</div><div class="org-type">Organisatie voor gehandicapten</div><div class="org-rating"><span class="star">★</span> 4.3 (3)</div></div>
+      <div class="org-item"><div class="org-name">Rubroek Fysiotherapie</div><div class="org-type">Fysiotherapeut</div><div class="org-rating"><span class="star">★</span> 4.8 (91)</div></div>
+      <div class="org-item"><div class="org-name">Wender</div><div class="org-type">Podotherapie</div><div class="org-rating">—</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-cat="bedrijf">
+    <div class="section-header sh-bedrijf">
+      <span class="st">🏢 Bedrijven</span>
+      <span class="count-badge">19</span>
+    </div>
+    <div class="org-grid">
+      <div class="org-item"><div class="org-name">MRM STYLE</div><div class="org-type">Kapper</div><div class="org-rating"><span class="star">★</span> 5.0 (35)</div></div>
+      <div class="org-item"><div class="org-name">De Naaister Rotterdam</div><div class="org-type">Kledingreparatie</div><div class="org-rating"><span class="star">★</span> 4.7 (253)</div></div>
+      <div class="org-item"><div class="org-name">De Hypotheker Rotterdam Goudsesingel</div><div class="org-type">Hypotheek</div><div class="org-rating"><span class="star">★</span> 4.6 (56)</div></div>
+      <div class="org-item"><div class="org-name">Yules masseert</div><div class="org-type">Massagetherapeut</div><div class="org-rating"><span class="star">★</span> 4.9 (183)</div></div>
+      <div class="org-item"><div class="org-name">Ambiance De Gier Rotterdam</div><div class="org-type">Leverancier van zonwering</div><div class="org-rating"><span class="star">★</span> 4.2 (26)</div></div>
+      <div class="org-item"><div class="org-name">Sunday's Rotterdam</div><div class="org-type">Zonnestudio</div><div class="org-rating"><span class="star">★</span> 4.0 (73)</div></div>
+      <div class="org-item"><div class="org-name">Sleutelcentrale Toller bv</div><div class="org-type">Slotenmaker</div><div class="org-rating"><span class="star">★</span> 4.5 (77)</div></div>
+      <div class="org-item"><div class="org-name">NAUTA architecture & research</div><div class="org-type">Architect</div><div class="org-rating"><span class="star">★</span> 5.0 (1)</div></div>
+      <div class="org-item"><div class="org-name">M1 Makelaardij</div><div class="org-type">Makelaardij</div><div class="org-rating"><span class="star">★</span> 4.8 (22)</div></div>
+      <div class="org-item"><div class="org-name">Lak Thai Massages</div><div class="org-type">Thaise massage</div><div class="org-rating"><span class="star">★</span> 4.9 (388)</div></div>
+      <div class="org-item"><div class="org-name">Yang & Yang Rotterdam</div><div class="org-type">Thermaal kuuroord</div><div class="org-rating"><span class="star">★</span> 3.9 (14)</div></div>
+      <div class="org-item"><div class="org-name">Wassalon Rotterdam</div><div class="org-type">Wasserette</div><div class="org-rating"><span class="star">★</span> 4.7 (119)</div></div>
+      <div class="org-item"><div class="org-name">Witgoed Outlet Rotterdam</div><div class="org-type">Elektronica winkel</div><div class="org-rating"><span class="star">★</span> 4.4 (25)</div></div>
+      <div class="org-item"><div class="org-name">La Movista</div><div class="org-type">Yogastudio</div><div class="org-rating"><span class="star">★</span> 3.0 (2)</div></div>
+      <div class="org-item"><div class="org-name">City Bikes</div><div class="org-type">Fietsenwinkel</div><div class="org-rating"><span class="star">★</span> 4.2 (5.219)</div></div>
+      <div class="org-item"><div class="org-name">Universal T'ai Chi Ch'uan Association</div><div class="org-type">Tai Chi-school</div><div class="org-rating"><span class="star">★</span> 5.0 (2)</div></div>
+      <div class="org-item"><div class="org-name">Vert.- en Bemidd.bur. Shani</div><div class="org-type">Vertaalservice</div><div class="org-rating"><span class="star">★</span> 4.0 (1)</div></div>
+      <div class="org-item"><div class="org-name">Bovag Autobedrijf "Alert"</div><div class="org-type">Autobedrijf / garage</div><div class="org-rating"><span class="star">★</span> 4.7 (45)</div></div>
+      <div class="org-item"><div class="org-name">Happy Cars Unal</div><div class="org-type">Autobedrijf / garage</div><div class="org-rating"><span class="star">★</span> 3.9 (202)</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-cat="onderwijs">
+    <div class="section-header sh-onderwijs">
+      <span class="st">🎓 Onderwijs</span>
+      <span class="count-badge">5</span>
+    </div>
+    <div class="org-grid">
+      <div class="org-item"><div class="org-name">Waalse school</div><div class="org-type">Basisschool</div><div class="org-rating">—</div></div>
+      <div class="org-item"><div class="org-name">obs Crooswijk</div><div class="org-type">Basisonderwijs</div><div class="org-rating">—</div></div>
+      <div class="org-item"><div class="org-name">Acato Bloemfleur</div><div class="org-type">School voor speciaal onderwijs</div><div class="org-rating">—</div></div>
+      <div class="org-item"><div class="org-name">Mister Dutch</div><div class="org-type">Onderwijsinstelling</div><div class="org-rating"><span class="star">★</span> 4.4 (9)</div></div>
+      <div class="org-item"><div class="org-name">Kon. Wilhelmina School</div><div class="org-type">Basisschool</div><div class="org-rating">—</div></div>
+    </div>
+  </div>
+
+  <div class="section" data-cat="buurt">
+    <div class="section-header sh-buurt">
+      <span class="st">🏘️ Buurt- & jongerencentra</span>
+      <span class="count-badge">5</span>
+    </div>
+    <div class="org-grid">
+      <div class="org-item"><div class="org-name">Wijkgebouw De Bron</div><div class="org-type">Buurthuis</div><div class="org-rating"><span class="star">★</span> 4.6 (41)</div></div>
+      <div class="org-item"><div class="org-name">Pinkstergemeente Kom en Zie Rotterdam</div><div class="org-type">Kerk</div><div class="org-rating"><span class="star">★</span> 4.6 (106)</div></div>
+      <div class="org-item"><div class="org-name">Nivon Rotterdam</div><div class="org-type">Cultureel centrum</div><div class="org-rating"><span class="star">★</span> 4.0 (118)</div></div>
+      <div class="org-item"><div class="org-name">Gymzaal Alkemadehof</div><div class="org-type">Sportcomplex</div><div class="org-rating"><span class="star">★</span> 4.0 (4)</div></div>
+      <div class="org-item"><div class="org-name">Cruyff Court Rubroek</div><div class="org-type">Voetbalveld</div><div class="org-rating">—</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function filter(cat) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector('.fb-' + (cat === 'all' ? 'all' : cat));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.section').forEach(s => {
+    s.style.display = (cat === 'all' || s.dataset.cat === cat) ? 'block' : 'none';
+  });
+}
+</script>

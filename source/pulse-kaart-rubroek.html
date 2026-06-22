@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pulse — Kaart Rubroek Organisaties</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #FAE8E8; }
+
+  #map { width: 100vw; height: 100vh; background: #f0ede6; }
+
+  /* Header */
+  #header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    padding: 20px 28px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    background: linear-gradient(180deg, rgba(250,232,232,0.97) 60%, transparent);
+    pointer-events: none;
+  }
+  #header > * { pointer-events: all; }
+  .logo { font-size: 32px; font-weight: 900; color: #E31E24; letter-spacing: -1px; }
+  .logo span { font-weight: 300; color: #2B3990; font-size: 12px; display: block; letter-spacing: 3px; text-transform: uppercase; margin-top: -2px; }
+  .header-right { text-align: right; font-size: 12px; color: #2B3990; font-weight: 500; line-height: 1.5; }
+
+  /* Legend */
+  #legend {
+    position: fixed; bottom: 28px; left: 28px; z-index: 1000;
+    background: rgba(255,255,255,0.95); backdrop-filter: blur(16px);
+    border-radius: 16px; padding: 18px 22px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    min-width: 200px;
+  }
+  #legend h3 {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 2.5px;
+    color: #2B3990; margin-bottom: 14px; font-weight: 700;
+  }
+  .legend-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px; font-size: 12px; color: #333;
+    cursor: pointer; transition: opacity 0.2s; font-weight: 500;
+  }
+  .legend-row:hover { opacity: 0.7; }
+  .legend-row.dimmed { opacity: 0.3; }
+  .legend-dot {
+    width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.8);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+  .legend-count {
+    margin-left: auto; font-size: 11px; color: #999; font-weight: 400;
+  }
+
+  /* Stats bar */
+  #stats {
+    position: fixed; bottom: 28px; right: 28px; z-index: 1000;
+    background: rgba(255,255,255,0.95); backdrop-filter: blur(16px);
+    border-radius: 16px; padding: 18px 22px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  #stats .stat-num { font-size: 28px; font-weight: 800; color: #E31E24; }
+  #stats .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #2B3990; margin-top: 2px; font-weight: 600; }
+
+  /* Custom Leaflet overrides */
+  .leaflet-popup-content-wrapper {
+    border-radius: 12px !important;
+    font-family: 'Inter', sans-serif !important;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.15) !important;
+  }
+  .leaflet-popup-content {
+    margin: 12px 16px !important;
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+  }
+  .popup-name { font-weight: 700; font-size: 14px; color: #2B3990; margin-bottom: 2px; }
+  .popup-cat { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; margin-bottom: 4px; }
+  .popup-desc { color: #555; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="logo">pulse<span>Organisaties Rubroek</span></div>
+  <div class="header-right">Wijk Rubroek, Kralingen-Crooswijk<br>Rotterdam — Agis Fase 2 (2025–2027)</div>
+</div>
+
+<div id="map"></div>
+
+<div id="legend">
+  <h3>Categorieën</h3>
+</div>
+
+<div id="stats">
+  <div class="stat-num" id="total-count">0</div>
+  <div class="stat-label">Organisaties</div>
+</div>
+
+<script>
+// ─── RUBROEK BOUNDARY ───
+// Approximate polygon of wijk Rubroek
+const rubroekBoundary = [
+  [51.9205, 4.4830], // SW - Goudsesingel / Rotte
+  [51.9205, 4.4940], // SE - Goudsesingel / Boezemweg
+  [51.9240, 4.4945], // E - langs Boezemweg
+  [51.9270, 4.4935], // NE - Boezemweg / Crooswijksesingel
+  [51.9310, 4.4925], // N - Crooswijksesingel
+  [51.9315, 4.4870], // NW - Crooswijksesingel / Rotte
+  [51.9290, 4.4850], // W - langs de Rotte
+  [51.9260, 4.4840], // W
+  [51.9230, 4.4835], // W - Rotte
+];
+
+// ─── CATEGORY COLORS ───
+const categories = {
+  winkels:    { color: "#EF9F27", label: "Winkels & Horeca",      icon: "" },
+  zorg:       { color: "#1D9E75", label: "Zorg & Welzijn",        icon: "" },
+  bedrijven:  { color: "#D85A30", label: "Bedrijven & Diensten",  icon: "" },
+  onderwijs:  { color: "#378ADD", label: "Onderwijs",             icon: "" },
+  buurt:      { color: "#7F77DD", label: "Buurt & Jongeren",      icon: "" },
+};
+
+// ─── ORGANIZATION DATA (from KML) ───
+const organizations = [
+  // WINKELS — Jonker Fransstraat & Goudsesingel area
+  {n:"Ezzo Restaurant",d:"Restaurant",c:"winkels",lat:51.9277,lng:4.4870},
+  {n:"Dirck3 Rotterdam",d:"Slijterij",c:"winkels",lat:51.9241,lng:4.4948},
+  {n:"CurlyN",d:"Kapper",c:"winkels",lat:51.9260,lng:4.4865},
+  {n:"PHONE4ALL",d:"Telefoonreparatie",c:"winkels",lat:51.9258,lng:4.4864},
+  {n:"Burgers & Frites Noord",d:"Hamburgers",c:"winkels",lat:51.9274,lng:4.4874},
+  {n:"Carrabas speelgoed",d:"Speelgoedwinkel",c:"winkels",lat:51.9262,lng:4.4866},
+  {n:"New Joel Coffeehouse",d:"Espressobar",c:"winkels",lat:51.9267,lng:4.4868},
+  {n:"GSM Dokter",d:"Telefoonreparatie",c:"winkels",lat:51.9256,lng:4.4863},
+  {n:"Used Products Rotterdam",d:"Tweedehandswinkel",c:"winkels",lat:51.9254,lng:4.4863},
+  {n:"MRM STYLE",d:"Kapper",c:"winkels",lat:51.9257,lng:4.4864},
+  {n:"Telecom",d:"Computerwinkel",c:"winkels",lat:51.9252,lng:4.4863},
+  {n:"Taco Mundo",d:"Mexicaans restaurant",c:"winkels",lat:51.9252,lng:4.4856},
+  {n:"Café El Clasico",d:"Koffiehuis",c:"winkels",lat:51.9254,lng:4.4867},
+  {n:"Royal Meubel",d:"Meubelwinkel",c:"winkels",lat:51.9236,lng:4.4895},
+  {n:"Mr. Sushi Rotterdam",d:"Sushi restaurant",c:"winkels",lat:51.9246,lng:4.4876},
+  {n:"Malic Tweewielers",d:"Fietswinkel",c:"winkels",lat:51.9249,lng:4.4870},
+  {n:"Albert Heijn Goudsesingel",d:"Supermarkt",c:"winkels",lat:51.9247,lng:4.4878},
+  {n:"Avondwinkel Nightshop",d:"Avondwinkel",c:"winkels",lat:51.9249,lng:4.4871},
+  {n:"SushiPoint Rotterdam",d:"Restaurant",c:"winkels",lat:51.9266,lng:4.4867},
+  {n:"Papa John's",d:"Pizza",c:"winkels",lat:51.9245,lng:4.4900},
+  {n:"La Perle S&S",d:"Modewinkel",c:"winkels",lat:51.9255,lng:4.4864},
+  {n:"Man Nam",d:"Restaurant",c:"winkels",lat:51.9240,lng:4.4880},
+  {n:"Kruidvat",d:"Drogist",c:"winkels",lat:51.9242,lng:4.4937},
+  {n:"Dirk Supermarkt",d:"Supermarkt",c:"winkels",lat:51.9244,lng:4.4920},
+  {n:"Schoonenberg",d:"Audicien",c:"winkels",lat:51.9241,lng:4.4956},
+  {n:"Tabakshop Sjakie",d:"Tabakswinkel",c:"winkels",lat:51.9286,lng:4.4898},
+  {n:"Albert Heijn Goudse Rijweg",d:"Supermarkt",c:"winkels",lat:51.9283,lng:4.4890},
+  {n:"The Garage 39",d:"Barbershop",c:"winkels",lat:51.9261,lng:4.4866},
+  {n:"Barbershop Excellent",d:"Barbershop",c:"winkels",lat:51.9263,lng:4.4866},
+  {n:"Café De Stoof",d:"Café",c:"winkels",lat:51.9264,lng:4.4868},
+  {n:"Sien Feng",d:"Chinees restaurant",c:"winkels",lat:51.9265,lng:4.4868},
+  {n:"Mobrigado",d:"Portugees restaurant",c:"winkels",lat:51.9271,lng:4.4869},
+  {n:"Duikwinkel Sub.Lub",d:"Duikwinkel",c:"winkels",lat:51.9270,lng:4.4861},
+  {n:"Wildhandel Treuren",d:"Wild & gevogelte",c:"winkels",lat:51.9238,lng:4.4890},
+  {n:"Witgoed Outlet",d:"Elektronicawinkel",c:"winkels",lat:51.9236,lng:4.4888},
+  {n:"Vagabond Barbers 1",d:"Barbershop",c:"winkels",lat:51.9275,lng:4.4871},
+  {n:"Bean",d:"Lunchroom",c:"winkels",lat:51.9268,lng:4.4868},
+  {n:"Wong's Place",d:"Surinaams restaurant",c:"winkels",lat:51.9270,lng:4.4869},
+  {n:"Brood Rotterdam",d:"Bakker",c:"winkels",lat:51.9272,lng:4.4869},
+
+  // ZORG — Goudse Rijweg & Jonker Fransstraat area
+  {n:"Caressa Dierenziekenhuis",d:"Dierenarts",c:"zorg",lat:51.9278,lng:4.4892},
+  {n:"Apotheek Rotterdam",d:"Apotheek",c:"zorg",lat:51.9240,lng:4.4910},
+  {n:"Mondhygiëne Rotterdam",d:"Mondhygiënist",c:"zorg",lat:51.9280,lng:4.4895},
+  {n:"Bergweg Tandartsen",d:"Tandarts",c:"zorg",lat:51.9282,lng:4.4900},
+  {n:"Auris Audiologisch Centrum",d:"Medisch centrum",c:"zorg",lat:51.9279,lng:4.4897},
+  {n:"Zorgwereld",d:"Fysiotherapie",c:"zorg",lat:51.9276,lng:4.4893},
+  {n:"Huisartsenpraktijk Özveren",d:"Huisarts",c:"zorg",lat:51.9275,lng:4.4890},
+  {n:"Apotheek Rubroek",d:"Apotheek | Jonker Fransstraat 38",c:"zorg",lat:51.9279,lng:4.4869},
+  {n:"Tand-Art",d:"Tandarts",c:"zorg",lat:51.9277,lng:4.4895},
+  {n:"Tandartsenpraktijk Lieuw",d:"Tandarts",c:"zorg",lat:51.9282,lng:4.4890},
+  {n:"Bento Clinics",d:"Medische kliniek",c:"zorg",lat:51.9278,lng:4.4898},
+  {n:"VAN SCHAIK en BYRMAN",d:"Huisarts",c:"zorg",lat:51.9280,lng:4.4893},
+  {n:"SamenSterk zorg",d:"Thuiszorg",c:"zorg",lat:51.9283,lng:4.4892},
+  {n:"Aafje Hoppesteyn",d:"Ouderenzorg",c:"zorg",lat:51.9290,lng:4.4905},
+  {n:"Middin – De Kade",d:"Gehandicaptenzorg",c:"zorg",lat:51.9288,lng:4.4900},
+  {n:"Rubroek Fysiotherapie",d:"Fysiotherapeut | Goudseplein 16",c:"zorg",lat:51.9285,lng:4.4888},
+  {n:"Wender Podotherapie",d:"Podotherapie",c:"zorg",lat:51.9281,lng:4.4894},
+
+  // BEDRIJVEN — Goudsesingel & verspreid over Rubroek
+  {n:"De Naaister Rotterdam",d:"Kledingreparatie",c:"bedrijven",lat:51.9242,lng:4.4905},
+  {n:"De Hypotheker",d:"Hypotheek",c:"bedrijven",lat:51.9247,lng:4.4884},
+  {n:"Yules masseert",d:"Massagetherapeut",c:"bedrijven",lat:51.9239,lng:4.4900},
+  {n:"Ambiance De Gier",d:"Zonwering",c:"bedrijven",lat:51.9237,lng:4.4895},
+  {n:"Sunday's Rotterdam",d:"Zonnestudio",c:"bedrijven",lat:51.9244,lng:4.4908},
+  {n:"Sleutelcentrale Toller",d:"Slotenmaker",c:"bedrijven",lat:51.9241,lng:4.4903},
+  {n:"NAUTA architecture",d:"Architect",c:"bedrijven",lat:51.9285,lng:4.4895},
+  {n:"M1 Makelaardij",d:"Makelaardij",c:"bedrijven",lat:51.9275,lng:4.4888},
+  {n:"Lak Thai Massages",d:"Thaise massage",c:"bedrijven",lat:51.9238,lng:4.4898},
+  {n:"Yang & Yang Rotterdam",d:"Thermaal kuuroord",c:"bedrijven",lat:51.9240,lng:4.4902},
+  {n:"Wassalon Rotterdam",d:"Wasserette",c:"bedrijven",lat:51.9243,lng:4.4910},
+  {n:"La Movista",d:"Yogastudio",c:"bedrijven",lat:51.9242,lng:4.4906},
+  {n:"City Bikes",d:"Fietsenwinkel",c:"bedrijven",lat:51.9236,lng:4.4892},
+  {n:"Universal T'ai Chi",d:"Tai Chi-school",c:"bedrijven",lat:51.9290,lng:4.4885},
+  {n:"Vert.bur. Shani",d:"Vertaalservice",c:"bedrijven",lat:51.9272,lng:4.4885},
+  {n:"Bovag Autobedrijf Alert",d:"Autobedrijf",c:"bedrijven",lat:51.9298,lng:4.4910},
+  {n:"Happy Cars Unal",d:"Autobedrijf",c:"bedrijven",lat:51.9296,lng:4.4912},
+
+  // ONDERWIJS — verspreid over Rubroek & Crooswijk
+  {n:"Waalse school",d:"Basisschool",c:"onderwijs",lat:51.9275,lng:4.4860},
+  {n:"OBS Crooswijk",d:"Basisonderwijs",c:"onderwijs",lat:51.9305,lng:4.4920},
+  {n:"Acato Bloemfleur",d:"Speciaal onderwijs",c:"onderwijs",lat:51.9295,lng:4.4908},
+  {n:"Mister Dutch",d:"Onderwijsinstelling",c:"onderwijs",lat:51.9288,lng:4.4898},
+  {n:"Kon. Wilhelmina School",d:"Basisschool",c:"onderwijs",lat:51.9300,lng:4.4915},
+
+  // BUURT & JONGEREN
+  {n:"Wijkgebouw De Bron",d:"Buurthuis | Vondelweg 254",c:"buurt",lat:51.9253,lng:4.4891},
+  {n:"Pinkstergemeente Kom en Zie",d:"Kerk / gemeenschapsruimte",c:"buurt",lat:51.9292,lng:4.4910},
+  {n:"Nivon Rotterdam",d:"Cultureel centrum | Dirk Smitsstraat",c:"buurt",lat:51.9286,lng:4.4859},
+  {n:"Gymzaal Alkemadehof",d:"Sportcomplex",c:"buurt",lat:51.9268,lng:4.4876},
+  {n:"Cruyff Court Rubroek",d:"Buitensportlocatie",c:"buurt",lat:51.9272,lng:4.4880},
+];
+
+// ─── MAP INIT ───
+const map = L.map('map', {
+  center: [51.9248, 4.4880],
+  zoom: 17,
+  zoomControl: false,
+  attributionControl: false,
+});
+
+// Zoom control top-right
+L.control.zoom({ position: 'topright' }).addTo(map);
+
+// ─── CUSTOM PANES (z-index ordering) ───
+map.createPane('featuresPane'); map.getPane('featuresPane').style.zIndex = 205;
+map.createPane('roadsPane');    map.getPane('roadsPane').style.zIndex    = 210;
+map.createPane('labelsPane');   map.getPane('labelsPane').style.zIndex   = 250;
+
+// Labels-only tile layer (CartoDB) — sits above GeoJSON features
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+  maxZoom: 20,
+  subdomains: 'abcd',
+  pane: 'labelsPane',
+  attribution: '&copy; CartoDB',
+}).addTo(map);
+
+// ─── OVERPASS API — custom-coloured map features ───
+const BBOX = '51.9195,4.4815,51.9325,4.4960';
+
+const OVERPASS_QUERY = `
+[out:json][timeout:25];
+(
+  way["natural"="water"](${BBOX});
+  relation["natural"="water"](${BBOX});
+  way["waterway"~"river|canal|stream"](${BBOX});
+  way["landuse"~"grass|park|meadow|garden|recreation_ground"](${BBOX});
+  way["leisure"~"park|garden|pitch|playground"](${BBOX});
+  way["natural"~"wood|scrub|heath|grassland"](${BBOX});
+  way["building"](${BBOX});
+  way["highway"~"motorway|trunk|primary|secondary|tertiary|unclassified|residential|service|footway|path|cycleway|pedestrian|living_street"](${BBOX});
+);
+out body; >; out skel qt;
+`;
+
+function osmToGeoJSON(data) {
+  const nodes = {};
+  data.elements.forEach(el => { if (el.type === 'node') nodes[el.id] = [el.lon, el.lat]; });
+
+  const features = [];
+  data.elements.forEach(el => {
+    if (el.type !== 'way') return;
+    const coords = (el.nodes || []).map(id => nodes[id]).filter(Boolean);
+    if (coords.length < 2) return;
+    const tags = el.tags || {};
+    const isClosed = coords.length > 2 && coords[0] && coords[coords.length-1] &&
+                     coords[0][0] === coords[coords.length-1][0] &&
+                     coords[0][1] === coords[coords.length-1][1];
+    const geomType = (isClosed && !tags.highway) ? 'Polygon' : 'LineString';
+    features.push({
+      type: 'Feature',
+      properties: tags,
+      geometry: {
+        type: geomType,
+        coordinates: geomType === 'Polygon' ? [coords] : coords,
+      }
+    });
+  });
+  return { type: 'FeatureCollection', features };
+}
+
+function roadWeight(highway) {
+  if (['motorway','trunk','primary'].includes(highway))       return 5;
+  if (['secondary','tertiary'].includes(highway))             return 4;
+  if (['unclassified','residential','living_street'].includes(highway)) return 3;
+  if (['service','pedestrian'].includes(highway))             return 2;
+  return 1.5;
+}
+
+fetch('https://overpass-api.de/api/interpreter', {
+  method: 'POST',
+  body: 'data=' + encodeURIComponent(OVERPASS_QUERY),
+})
+.then(r => r.json())
+.then(data => {
+  const geojson = osmToGeoJSON(data);
+
+  // 1. Water polygons & rivers
+  L.geoJSON(geojson, {
+    pane: 'featuresPane',
+    filter: f => {
+      const t = f.properties;
+      return t.natural === 'water' || ['river','canal','stream'].includes(t.waterway);
+    },
+    style: f => {
+      const t = f.properties;
+      if (f.geometry.type === 'LineString') {
+        return { color: '#aad3df', weight: t.waterway === 'river' ? 5 : 3, opacity: 1 };
+      }
+      return { fillColor: '#aad3df', fillOpacity: 1, color: '#9ac8d8', weight: 0.5, stroke: true };
+    }
+  }).addTo(map);
+
+  // 2. Green areas
+  L.geoJSON(geojson, {
+    pane: 'featuresPane',
+    filter: f => {
+      const t = f.properties;
+      return ['grass','park','meadow','garden','recreation_ground'].includes(t.landuse) ||
+             ['park','garden','pitch','playground'].includes(t.leisure) ||
+             ['wood','scrub','heath','grassland'].includes(t.natural);
+    },
+    style: () => ({ fillColor: '#b8ddb0', fillOpacity: 1, color: '#a8cd9f', weight: 0.5, stroke: true })
+  }).addTo(map);
+
+  // 3. Buildings (grey)
+  L.geoJSON(geojson, {
+    pane: 'featuresPane',
+    filter: f => !!f.properties.building,
+    style: () => ({ fillColor: '#c8c4bc', fillOpacity: 1, color: '#b0aca4', weight: 0.5, stroke: true })
+  }).addTo(map);
+
+  // 4. Roads (white)
+  L.geoJSON(geojson, {
+    pane: 'roadsPane',
+    filter: f => !!f.properties.highway,
+    style: f => ({
+      color: '#ffffff',
+      weight: roadWeight(f.properties.highway),
+      opacity: 1,
+      lineCap: 'round',
+      lineJoin: 'round',
+    })
+  }).addTo(map);
+})
+.catch(err => {
+  console.warn('Overpass API failed, falling back to CartoDB tiles:', err);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 20, subdomains: 'abcd'
+  }).addTo(map);
+});
+
+// ─── RUBROEK BOUNDARY POLYGON ───
+L.polygon(rubroekBoundary, {
+  color: '#E31E24',
+  weight: 2.5,
+  opacity: 0.6,
+  fillColor: '#E31E24',
+  fillOpacity: 0.06,
+  dashArray: '8 4',
+}).addTo(map);
+
+// Boundary label
+const labelIcon = L.divIcon({
+  html: '<div style="font-family:Inter,sans-serif; font-size:13px; font-weight:700; color:#E31E24; letter-spacing:3px; text-transform:uppercase; white-space:nowrap; text-shadow:0 1px 3px rgba(255,255,255,0.8);">RUBROEK</div>',
+  className: '',
+  iconAnchor: [35, 10],
+});
+L.marker([51.9305, 4.4870], { icon: labelIcon, interactive: false }).addTo(map);
+
+// ─── LAYER GROUPS PER CATEGORY ───
+const layerGroups = {};
+const counts = {};
+
+Object.keys(categories).forEach(cat => {
+  layerGroups[cat] = L.layerGroup().addTo(map);
+  counts[cat] = 0;
+});
+
+// ─── ADD DOTS ───
+organizations.forEach(org => {
+  counts[org.c]++;
+  const cat = categories[org.c];
+  const marker = L.circleMarker([org.lat, org.lng], {
+    radius: 6,
+    fillColor: cat.color,
+    fillOpacity: 0.85,
+    color: '#fff',
+    weight: 1.5,
+    opacity: 0.9,
+  });
+
+  marker.bindPopup(`
+    <div class="popup-cat" style="color:${cat.color}">${cat.label}</div>
+    <div class="popup-name">${org.n}</div>
+    <div class="popup-desc">${org.d}</div>
+  `, { closeButton: false, offset: [0, -4] });
+
+  marker.on('mouseover', function() { this.openPopup(); this.setStyle({ radius: 9, weight: 2.5 }); });
+  marker.on('mouseout', function() { this.closePopup(); this.setStyle({ radius: 6, weight: 1.5 }); });
+
+  layerGroups[org.c].addLayer(marker);
+});
+
+// ─── TOTAL COUNT ───
+document.getElementById('total-count').textContent = organizations.length;
+
+// ─── BUILD LEGEND ───
+const legendEl = document.getElementById('legend');
+const activeFilters = {};
+
+Object.keys(categories).forEach(cat => {
+  activeFilters[cat] = true;
+  const row = document.createElement('div');
+  row.className = 'legend-row';
+  row.dataset.cat = cat;
+  row.innerHTML = `
+    <div class="legend-dot" style="background:${categories[cat].color}"></div>
+    <span>${categories[cat].label}</span>
+    <span class="legend-count">${counts[cat]}</span>
+  `;
+  row.addEventListener('click', () => {
+    activeFilters[cat] = !activeFilters[cat];
+    if (activeFilters[cat]) {
+      layerGroups[cat].addTo(map);
+      row.classList.remove('dimmed');
+    } else {
+      map.removeLayer(layerGroups[cat]);
+      row.classList.add('dimmed');
+    }
+    // Update count
+    let total = 0;
+    Object.keys(activeFilters).forEach(c => { if (activeFilters[c]) total += counts[c]; });
+    document.getElementById('total-count').textContent = total;
+  });
+  legendEl.appendChild(row);
+});
+</script>
+</body>
+</html>

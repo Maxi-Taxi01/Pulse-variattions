@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Individuele systeemkaarten – bewoners en zorgprofessionals</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="atlas">
+      <header class="atlas-header">
+        <div class="atlas-title">
+          <h1>Individuele systeemkaarten</h1>
+          <p>
+            Alle betekenisvolle onderwerpen uit de interviewanalyses, per bewoner en
+            zorgprofessional. De relaties zijn interpretaties van de gecodeerde onderwerpen:
+            ondersteunend, remmend of onderling versterkend.
+          </p>
+        </div>
+        <div class="atlas-controls">
+          <label>
+            <span class="sr-only">Kies een persoon</span>
+            <select id="mapSelect" aria-label="Kies een persoon"></select>
+          </label>
+          <button id="downloadSvg" type="button">Download SVG</button>
+        </div>
+      </header>
+      <section class="map-workspace">
+        <div class="map-stage" id="mapStage" aria-live="polite"></div>
+        <aside class="detail-panel" id="detailPanel" hidden aria-live="polite" aria-label="Onderwerpinformatie">
+          <button class="detail-close" id="detailClose" type="button" aria-label="Sluit onderwerpinformatie">×</button>
+          <p class="detail-kicker" id="detailTheme"></p>
+          <h2 id="detailTitle"></h2>
+          <p class="detail-meaning" id="detailMeaning"></p>
+          <section class="detail-context">
+            <h3>Interviewcontext</h3>
+            <p class="detail-context-person" id="detailContextPerson"></p>
+            <p id="detailContext"></p>
+          </section>
+          <dl class="detail-facts">
+            <div id="detailAnalyticalRow">
+              <dt>Analytische systeemterm</dt>
+              <dd id="detailAnalytical"></dd>
+            </div>
+            <div>
+              <dt>Invloed</dt>
+              <dd id="detailInfluence"></dd>
+            </div>
+            <div>
+              <dt>Centrale variabele</dt>
+              <dd id="detailCenter"></dd>
+            </div>
+          </dl>
+          <section class="detail-relations" id="detailRelationsSection">
+            <h3>Verbonden relaties</h3>
+            <ul id="detailRelations"></ul>
+          </section>
+          <p class="detail-source" id="detailSource"></p>
+        </aside>
+      </section>
+      <nav class="map-index" id="mapIndex" aria-label="Alle systeemkaarten"></nav>
+    </main>
+    <script src="maps-data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

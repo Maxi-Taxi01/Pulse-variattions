@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>Rubroek Rotterdam – Organisaties</name>
+  <description>Alle organisaties in wijk Rubroek, Rotterdam. Ingedeeld per categorie: Winkels, Zorg, Bedrijven, Onderwijs en Buurt/Jongerencentra.</description>
+
+  <!-- Stijlen per categorie -->
+  <Style id="winkel">
+    <IconStyle><color>ff1478fa</color><scale>1.1</scale>
+      <Icon><href>https://maps.google.com/mapfiles/kml/paddle/ylw-circle.png</href></Icon>
+    </IconStyle>
+    <LabelStyle><color>ff1478fa</color></LabelStyle>
+  </Style>
+
+  <Style id="zorg">
+    <IconStyle><color>ff14a000</color><scale>1.1</scale>
+      <Icon><href>https://maps.google.com/mapfiles/kml/paddle/grn-circle.png</href></Icon>
+    </IconStyle>
+    <LabelStyle><color>ff14a000</color></LabelStyle>
+  </Style>
+
+  <Style id="bedrijf">
+    <IconStyle><color>ff0000ff</color><scale>1.1</scale>
+      <Icon><href>https://maps.google.com/mapfiles/kml/paddle/red-circle.png</href></Icon>
+    </IconStyle>
+    <LabelStyle><color>ff0000ff</color></LabelStyle>
+  </Style>
+
+  <Style id="onderwijs">
+    <IconStyle><color>ffff7800</color><scale>1.1</scale>
+      <Icon><href>https://maps.google.com/mapfiles/kml/paddle/blu-circle.png</href></Icon>
+    </IconStyle>
+    <LabelStyle><color>ffff7800</color></LabelStyle>
+  </Style>
+
+  <Style id="buurt">
+    <IconStyle><color>ffaa00ff</color><scale>1.1</scale>
+      <Icon><href>https://maps.google.com/mapfiles/kml/paddle/pur-circle.png</href></Icon>
+    </IconStyle>
+    <LabelStyle><color>ffaa00ff</color></LabelStyle>
+  </Style>
+
+  <!-- ===== WINKELS ===== -->
+  <Folder>
+    <name>🛍️ Winkels</name>
+    <description>Winkels, restaurants, supermarkten en horeca in Rubroek</description>
+    <visibility>1</visibility>
+
+    <Placemark><name>Ezzo Restaurant</name><description>Restaurant | ★ 4.7 (528)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4848,51.9224,0</coordinates></Point></Placemark>
+    <Placemark><name>Dirck3 Rotterdam Goudsesingel</name><description>Slijterij | ★ 4.8 (190)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4882,51.9213,0</coordinates></Point></Placemark>
+    <Placemark><name>CurlyN</name><description>Kapper | ★ 5.0 (96)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4851,51.9231,0</coordinates></Point></Placemark>
+    <Placemark><name>PHONE4ALL</name><description>Telefoonreparatieservice | ★ 4.5 (990)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4845,51.9226,0</coordinates></Point></Placemark>
+    <Placemark><name>Burgers &amp; Frites Noord</name><description>Hamburgers | ★ 4.4 (221)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4853,51.9228,0</coordinates></Point></Placemark>
+    <Placemark><name>Carrabas speelgoed</name><description>Speelgoedwinkel | ★ 4.7 (222)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4860,51.9220,0</coordinates></Point></Placemark>
+    <Placemark><name>New Joel Coffeehouse</name><description>Espressobar | ★ 4.9 (817)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4858,51.9222,0</coordinates></Point></Placemark>
+    <Placemark><name>GSM Dokter</name><description>Telefoonreparatieservice | ★ 4.4 (1146)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4843,51.9229,0</coordinates></Point></Placemark>
+    <Placemark><name>Used Products Rotterdam</name><description>Tweedehandswinkel | ★ 4.5 (74)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4872,51.9218,0</coordinates></Point></Placemark>
+    <Placemark><name>MRM STYLE (Winkels)</name><description>Kapper | ★ 4.6 (382)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4865,51.9221,0</coordinates></Point></Placemark>
+    <Placemark><name>Telecom</name><description>Computerwinkel | ★ 4.6 (165)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4868,51.9219,0</coordinates></Point></Placemark>
+    <Placemark><name>Taco Mundo Rotterdam-Centrum</name><description>Mexicaans restaurant | ★ 3.8 (326)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4875,51.9216,0</coordinates></Point></Placemark>
+    <Placemark><name>Café El Clasico</name><description>Koffiehuis | ★ 4.6</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4863,51.9223,0</coordinates></Point></Placemark>
+    <Placemark><name>Royal Meubel Boxspring Bedden C.</name><description>Meubelwinkel | ★ 4.4 (76)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4878,51.9215,0</coordinates></Point></Placemark>
+    <Placemark><name>Mr. Sushi Rotterdam</name><description>Sushi / afhaalrestaurant | ★ 4.0 (391)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4855,51.9225,0</coordinates></Point></Placemark>
+    <Placemark><name>Malic Tweewieiers</name><description>Fietswinkel | ★ 4.3 (381)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4870,51.9217,0</coordinates></Point></Placemark>
+    <Placemark><name>Albert Heijn Goudsesingel</name><description>Supermarkt | ★ 3.5 (129) | Goudsesingel 217A</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4884,51.9212,0</coordinates></Point></Placemark>
+    <Placemark><name>Avondwinkel Nightshop &amp; Slijterij</name><description>Avondwinkel</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4861,51.9227,0</coordinates></Point></Placemark>
+    <Placemark><name>SushiPoint Rotterdam</name><description>Restaurant | ★ 4.0 (241)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4856,51.9230,0</coordinates></Point></Placemark>
+    <Placemark><name>Papa John's</name><description>Afhaalzaak / pizza | ★ 2.4 (222)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4849,51.9232,0</coordinates></Point></Placemark>
+    <Placemark><name>La Perle S&amp;S</name><description>Modewinkel | ★ 4.9 (24)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4866,51.9220,0</coordinates></Point></Placemark>
+    <Placemark><name>Man Nam</name><description>Restaurant | ★ 4.4 (182)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4873,51.9214,0</coordinates></Point></Placemark>
+    <Placemark><name>Kruidvat</name><description>Drogist | ★ 3.4 (91)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4847,51.9233,0</coordinates></Point></Placemark>
+    <Placemark><name>Dirk Supermarkt Goudsesingel</name><description>Supermarkt | ★ 4.1 (282)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4886,51.9211,0</coordinates></Point></Placemark>
+    <Placemark><name>Schoonenberg</name><description>Audicien | ★ 3.9 (44)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4862,51.9222,0</coordinates></Point></Placemark>
+    <Placemark><name>Tabakshop Sjakie</name><description>Tabakswinkel</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4864,51.9224,0</coordinates></Point></Placemark>
+    <Placemark><name>Albert Heijn Goudse Rijweg</name><description>Supermarkt | ★ 3.8 (897) | Goudse Rijweg 707</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4880,51.9245,0</coordinates></Point></Placemark>
+    <Placemark><name>The Garage 39</name><description>Barbershop | ★ 4.9 (152)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4867,51.9218,0</coordinates></Point></Placemark>
+    <Placemark><name>Barbershop Excellent</name><description>Barbershop | ★ 4.8 (46)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4850,51.9235,0</coordinates></Point></Placemark>
+    <Placemark><name>Café De Stoof</name><description>Café | ★ 4.8 (131)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4854,51.9234,0</coordinates></Point></Placemark>
+    <Placemark><name>Sien Feng</name><description>Chinees restaurant | ★ 3.2 (207)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4871,51.9216,0</coordinates></Point></Placemark>
+    <Placemark><name>Mobrigado</name><description>Portugees restaurant | ★ 4.8 (76)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4876,51.9214,0</coordinates></Point></Placemark>
+    <Placemark><name>Duikwinkel Sub.Lub</name><description>Duikwinkel</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4857,51.9229,0</coordinates></Point></Placemark>
+    <Placemark><name>Wildhandel Treuren</name><description>Wild &amp; gevogelte | ★ 4.8 (210)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4879,51.9213,0</coordinates></Point></Placemark>
+    <Placemark><name>Witgoed Outlet Rotterdam (Winkels)</name><description>Elektronicawinkel</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4874,51.9215,0</coordinates></Point></Placemark>
+    <Placemark><name>Vagabond Barbers 1</name><description>Barbershop | ★ 4.8 (412)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4852,51.9237,0</coordinates></Point></Placemark>
+    <Placemark><name>Bean</name><description>Lunchroom | ★ 4.7 (230)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4859,51.9226,0</coordinates></Point></Placemark>
+    <Placemark><name>Wong's Place</name><description>Surinaams restaurant | ★ 4.4 (871)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4869,51.9218,0</coordinates></Point></Placemark>
+    <Placemark><name>Brood Rotterdam</name><description>Bakker | ★ 3.6 (213)</description><styleUrl>#winkel</styleUrl><Point><coordinates>4.4877,51.9216,0</coordinates></Point></Placemark>
+  </Folder>
+
+  <!-- ===== ZORG ===== -->
+  <Folder>
+    <name>🏥 Zorg</name>
+    <description>Huisartsen, apotheken, tandartsen, fysiotherapie en ouderenzorg in Rubroek</description>
+    <visibility>1</visibility>
+
+    <Placemark><name>Caressa Dierenziekenhuis Rotterdam</name><description>Dierenarts | ★ 4.1 (99)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4890,51.9255,0</coordinates></Point></Placemark>
+    <Placemark><name>Apotheek Rotterdam</name><description>Apotheek | ★ 3.0 (6)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4883,51.9218,0</coordinates></Point></Placemark>
+    <Placemark><name>Mondhygiëne Rotterdam</name><description>Mondhygiënist | ★ 4.9 (47)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4895,51.9250,0</coordinates></Point></Placemark>
+    <Placemark><name>Bergweg Tandartsen</name><description>Tandarts | ★ 3.8 (13)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4900,51.9248,0</coordinates></Point></Placemark>
+    <Placemark><name>Auris Audiologisch Centrum Rotterdam</name><description>Medisch centrum | ★ 4.0 (56)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4892,51.9252,0</coordinates></Point></Placemark>
+    <Placemark><name>Zorgwereld</name><description>Fysiotherapiepraktijk | ★ 4.2 (61)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4888,51.9257,0</coordinates></Point></Placemark>
+    <Placemark><name>Huisartsenpraktijk Özveren</name><description>Medische kliniek | ★ 3.2 (17)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4885,51.9242,0</coordinates></Point></Placemark>
+    <Placemark><name>Apotheek Rubroek</name><description>Apotheek | ★ 5.0 (80) | Jonker Fransstraat 38</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4840,51.9228,0</coordinates></Point></Placemark>
+    <Placemark><name>Tand-Art</name><description>Tandarts | ★ 3.8 (43)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4893,51.9246,0</coordinates></Point></Placemark>
+    <Placemark><name>Tandartsenpraktijk A.W.K. Lieuw on.</name><description>Tandarts | ★ 5.0 (2)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4887,51.9260,0</coordinates></Point></Placemark>
+    <Placemark><name>Bento Clinics</name><description>Medische kliniek | ★ 4.8 (70)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4896,51.9244,0</coordinates></Point></Placemark>
+    <Placemark><name>VAN SCHAIK en BYRMAN Huisartsen</name><description>Huisarts | ★ 3.0 (41)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4891,51.9253,0</coordinates></Point></Placemark>
+    <Placemark><name>Randstad Letselschade &amp; Advies R.</name><description>Advocaat / letselschade | ★ 4.4 (87)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4898,51.9241,0</coordinates></Point></Placemark>
+    <Placemark><name>SamenSterk zorg &amp; adviesbureau</name><description>Thuiszorg | ★ 5.0 (2)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4886,51.9258,0</coordinates></Point></Placemark>
+    <Placemark><name>Aafje Hoppesteyn – Ouderenzorg</name><description>Ouderenzorg | ★ 4.1 (11)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4902,51.9265,0</coordinates></Point></Placemark>
+    <Placemark><name>Middin – De Kade</name><description>Organisatie voor gehandicapten | ★ 4.3 (3)</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4897,51.9262,0</coordinates></Point></Placemark>
+    <Placemark><name>Rubroek Fysiotherapie</name><description>Fysiotherapeut | ★ 4.8 (91) | Goudseplein 16</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4881,51.9210,0</coordinates></Point></Placemark>
+    <Placemark><name>Wender Podotherapie</name><description>Podotherapie</description><styleUrl>#zorg</styleUrl><Point><coordinates>4.4889,51.9256,0</coordinates></Point></Placemark>
+  </Folder>
+
+  <!-- ===== BEDRIJVEN ===== -->
+  <Folder>
+    <name>🏢 Bedrijven</name>
+    <description>Dienstverleners, kantoren en overige bedrijven in Rubroek</description>
+    <visibility>1</visibility>
+
+    <Placemark><name>MRM STYLE</name><description>Kapper | ★ 5.0 (35)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4866,51.9222,0</coordinates></Point></Placemark>
+    <Placemark><name>De Naaister Rotterdam</name><description>Kledingreparatie | ★ 4.7 (253)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4869,51.9219,0</coordinates></Point></Placemark>
+    <Placemark><name>De Hypotheker Rotterdam Goudsesingel</name><description>Hypotheek | ★ 4.6 (56)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4882,51.9212,0</coordinates></Point></Placemark>
+    <Placemark><name>Yules masseert</name><description>Massagetherapeut | ★ 4.9 (183)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4875,51.9217,0</coordinates></Point></Placemark>
+    <Placemark><name>Ambiance De Gier Rotterdam</name><description>Leverancier van zonwering | ★ 4.2 (26)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4879,51.9215,0</coordinates></Point></Placemark>
+    <Placemark><name>Sunday's Rotterdam</name><description>Zonnestudio | ★ 4.0 (73)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4872,51.9220,0</coordinates></Point></Placemark>
+    <Placemark><name>Sleutelcentrale Toller bv</name><description>Slotenmaker | ★ 4.5 (77)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4876,51.9218,0</coordinates></Point></Placemark>
+    <Placemark><name>NAUTA architecture &amp; research</name><description>Architect | ★ 5.0 (1)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4892,51.9268,0</coordinates></Point></Placemark>
+    <Placemark><name>M1 Makelaardij</name><description>Makelaardij | ★ 4.8 (22)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4885,51.9240,0</coordinates></Point></Placemark>
+    <Placemark><name>Lak Thai Massages</name><description>Thaise massage | ★ 4.9 (388)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4877,51.9216,0</coordinates></Point></Placemark>
+    <Placemark><name>Yang &amp; Yang Rotterdam</name><description>Thermaal kuuroord | ★ 3.9 (14)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4873,51.9219,0</coordinates></Point></Placemark>
+    <Placemark><name>Wassalon Rotterdam</name><description>Wasserette | ★ 4.7 (119)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4867,51.9221,0</coordinates></Point></Placemark>
+    <Placemark><name>Witgoed Outlet Rotterdam</name><description>Elektronicawinkel | ★ 4.4 (25)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4870,51.9220,0</coordinates></Point></Placemark>
+    <Placemark><name>La Movista</name><description>Yogastudio | ★ 3.0 (2)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4874,51.9218,0</coordinates></Point></Placemark>
+    <Placemark><name>City Bikes</name><description>Fietsenwinkel | ★ 4.2 (5219)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4878,51.9214,0</coordinates></Point></Placemark>
+    <Placemark><name>Universal T'ai Chi Ch'uan Association</name><description>Tai Chi-school | ★ 5.0 (2)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4880,51.9270,0</coordinates></Point></Placemark>
+    <Placemark><name>Vert.- en Bemidd.bur. Shani</name><description>Vertaalservice | ★ 4.0 (1)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4883,51.9238,0</coordinates></Point></Placemark>
+    <Placemark><name>Bovag Autobedrijf "Alert"</name><description>Autobedrijf / garage | ★ 4.7 (45)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4905,51.9280,0</coordinates></Point></Placemark>
+    <Placemark><name>Happy Cars Unal</name><description>Autobedrijf / garage | ★ 3.9 (202)</description><styleUrl>#bedrijf</styleUrl><Point><coordinates>4.4908,51.9278,0</coordinates></Point></Placemark>
+  </Folder>
+
+  <!-- ===== ONDERWIJS ===== -->
+  <Folder>
+    <name>🎓 Onderwijs</name>
+    <description>Scholen en onderwijsinstellingen in Rubroek</description>
+    <visibility>1</visibility>
+
+    <Placemark><name>Waalse school</name><description>Basisschool</description><styleUrl>#onderwijs</styleUrl><Point><coordinates>4.4855,51.9270,0</coordinates></Point></Placemark>
+    <Placemark><name>obs Crooswijk</name><description>Basisonderwijs</description><styleUrl>#onderwijs</styleUrl><Point><coordinates>4.4918,51.9308,0</coordinates></Point></Placemark>
+    <Placemark><name>Acato Bloemfleur</name><description>School voor speciaal onderwijs</description><styleUrl>#onderwijs</styleUrl><Point><coordinates>4.4902,51.9290,0</coordinates></Point></Placemark>
+    <Placemark><name>Mister Dutch</name><description>Onderwijsinstelling | ★ 4.4 (9)</description><styleUrl>#onderwijs</styleUrl><Point><coordinates>4.4895,51.9282,0</coordinates></Point></Placemark>
+    <Placemark><name>Kon. Wilhelmina School</name><description>Basisschool</description><styleUrl>#onderwijs</styleUrl><Point><coordinates>4.4910,51.9298,0</coordinates></Point></Placemark>
+  </Folder>
+
+  <!-- ===== BUURT / JONGERENCENTRA ===== -->
+  <Folder>
+    <name>🏘️ Buurt- &amp; jongerencentra</name>
+    <description>Buurthuizen, culturele centra en sportfaciliteiten in Rubroek</description>
+    <visibility>1</visibility>
+
+    <Placemark><name>Wijkgebouw De Bron</name><description>Buurthuis | ★ 4.6 (41) | Vondelweg 254</description><styleUrl>#buurt</styleUrl><Point><coordinates>4.4915,51.9285,0</coordinates></Point></Placemark>
+    <Placemark><name>Pinkstergemeente Kom en Zie Rotterdam</name><description>Kerk / gemeenschapsruimte | ★ 4.6 (106)</description><styleUrl>#buurt</styleUrl><Point><coordinates>4.4920,51.9290,0</coordinates></Point></Placemark>
+    <Placemark><name>Nivon Rotterdam</name><description>Cultureel centrum | ★ 4.0 (118) | Dirk Smitsstraat</description><styleUrl>#buurt</styleUrl><Point><coordinates>4.4930,51.9298,0</coordinates></Point></Placemark>
+    <Placemark><name>Gymzaal Alkemadehof</name><description>Sportcomplex | ★ 4.0 (4)</description><styleUrl>#buurt</styleUrl><Point><coordinates>4.4925,51.9275,0</coordinates></Point></Placemark>
+    <Placemark><name>Cruyff Court Rubroek</name><description>Voetbalveld / buitensportlocatie</description><styleUrl>#buurt</styleUrl><Point><coordinates>4.4912,51.9268,0</coordinates></Point></Placemark>
+  </Folder>
+
+</Document>
+</kml>

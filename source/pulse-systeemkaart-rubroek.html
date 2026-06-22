@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pulse — Systeemkaart Rubroek, Rotterdam</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; overflow:hidden; width:100vw; height:100vh; }
+
+  /* ── MAP BASE ── */
+  #map { position:fixed; inset:0; z-index:0; }
+
+  /* ── NETWORK OVERLAY ── */
+  #network-layer {
+    position:fixed; inset:0; z-index:10;
+    pointer-events:none;
+  }
+  #network-layer svg { width:100%; height:100%; pointer-events:all; }
+
+  /* ── HEADER ── */
+  #header {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    padding:20px 28px;
+    display:flex; align-items:flex-start; justify-content:space-between;
+    background:linear-gradient(180deg, rgba(250,232,232,0.95) 55%, transparent);
+    pointer-events:none;
+  }
+  #header > * { pointer-events:all; }
+  .logo { font-size:32px; font-weight:900; color:#E31E24; letter-spacing:-1px; line-height:1; }
+  .logo span { font-weight:300; color:#2B3990; font-size:12px; display:block; letter-spacing:3px; text-transform:uppercase; margin-top:1px; }
+  .header-right { text-align:right; font-size:12px; color:#2B3990; font-weight:500; line-height:1.5; }
+  .header-right strong { display:block; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#E31E24; margin-bottom:2px; }
+
+  /* ── TOOLTIP ── */
+  .tooltip {
+    position:fixed; z-index:200;
+    background:#2B3990; color:#fff;
+    padding:14px 18px; border-radius:12px;
+    font-size:13px; line-height:1.5; max-width:280px;
+    pointer-events:none; opacity:0; transition:opacity .2s;
+    box-shadow:0 8px 32px rgba(43,57,144,.35);
+  }
+  .tt-cat  { font-size:10px; text-transform:uppercase; letter-spacing:2px; color:#8DC63F; margin-bottom:4px; }
+  .tt-name { font-weight:700; font-size:15px; color:#F5C6C6; margin-bottom:4px; }
+  .tt-addr { font-size:11px; color:rgba(255,255,255,.55); margin-top:6px; font-style:italic; }
+
+  /* ── LEGENDS ── */
+  #legend-network, #legend-map {
+    position:fixed; bottom:28px; z-index:100;
+    background:rgba(255,255,255,.94); backdrop-filter:blur(16px);
+    border-radius:16px; padding:16px 20px;
+    box-shadow:0 4px 24px rgba(0,0,0,.1);
+  }
+  #legend-network { left:28px; }
+  #legend-map     { left:260px; }
+
+  #legend-network h3, #legend-map h3 {
+    font-size:10px; text-transform:uppercase; letter-spacing:2.5px;
+    color:#2B3990; margin-bottom:12px; font-weight:700;
+  }
+  .ln-item {
+    display:flex; align-items:center; gap:9px;
+    margin-bottom:7px; font-size:11px; color:#444; font-weight:500;
+    cursor:pointer; transition:opacity .2s;
+  }
+  .ln-item:hover { opacity:.7; }
+  .ln-dot { width:13px; height:13px; border-radius:50%; flex-shrink:0; }
+  .lm-item {
+    display:flex; align-items:center; gap:9px;
+    margin-bottom:7px; font-size:11px; color:#444; font-weight:500;
+    cursor:pointer; transition:opacity .2s;
+  }
+  .lm-item:hover { opacity:.7; }
+  .lm-item.dimmed { opacity:.25; }
+  .lm-dot {
+    width:11px; height:11px; border-radius:50%; flex-shrink:0;
+    border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.2);
+  }
+  .lm-count { margin-left:auto; font-size:10px; color:#aaa; }
+
+  /* ── CONN LEGEND ── */
+  #legend-conn {
+    position:fixed; bottom:28px; right:28px; z-index:100;
+    background:rgba(255,255,255,.94); backdrop-filter:blur(16px);
+    border-radius:16px; padding:16px 20px;
+    box-shadow:0 4px 24px rgba(0,0,0,.1);
+  }
+  #legend-conn h3 { font-size:10px; text-transform:uppercase; letter-spacing:2.5px; color:#2B3990; margin-bottom:12px; font-weight:700; }
+  .lc-item { display:flex; align-items:center; gap:9px; margin-bottom:7px; font-size:11px; color:#444; font-weight:500; }
+  .lc-line { width:28px; height:3px; border-radius:2px; flex-shrink:0; }
+
+  /* ── INSTRUCTIONS ── */
+  #instructions {
+    position:fixed; top:78px; right:28px; z-index:100;
+    font-size:10px; color:#999; text-align:right; line-height:1.8;
+  }
+
+  /* Leaflet overrides */
+  .leaflet-control-zoom { margin-top:80px !important; }
+  .leaflet-popup-content-wrapper { border-radius:10px !important; font-family:'Inter',sans-serif !important; }
+  .leaflet-popup-content { margin:10px 14px !important; font-size:12px !important; line-height:1.5 !important; }
+  .mp-name { font-weight:700; color:#2B3990; }
+  .mp-cat  { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; margin-bottom:2px; }
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND MAP -->
+<div id="map"></div>
+
+<!-- NETWORK SVG OVERLAY -->
+<div id="network-layer"><svg id="graph"></svg></div>
+
+<!-- UI -->
+<div id="header">
+  <div class="logo">pulse<span>Systeemkaart Rubroek</span></div>
+  <div class="header-right"><strong>Kerncoalitie & lokale partijen</strong>Wijk Rubroek, Rotterdam — Agis Fase 2 (2025–2027)</div>
+</div>
+<div id="instructions">Kaart: scroll/sleep om te navigeren<br>Netwerk: sleep nodes, hover voor info</div>
+<div class="tooltip" id="tooltip"></div>
+
+<!-- Network legend -->
+<div id="legend-network">
+  <h3>Netwerk</h3>
+  <div class="ln-item" data-cat="core">   <div class="ln-dot" style="background:#E31E24"></div>Kerncoalitie Pulse</div>
+  <div class="ln-item" data-cat="local">  <div class="ln-dot" style="background:#2B3990"></div>Lokale organisaties</div>
+  <div class="ln-item" data-cat="target"> <div class="ln-dot" style="background:#8DC63F"></div>Bewoners & doelgroepen</div>
+</div>
+
+<!-- Map legend -->
+<div id="legend-map">
+  <h3>Kaart</h3>
+</div>
+
+<!-- Connection legend -->
+<div id="legend-conn">
+  <h3>Verbindingen</h3>
+  <div class="lc-item"><div class="lc-line" style="background:#E31E24"></div>Coalitie & regie</div>
+  <div class="lc-item"><div class="lc-line" style="background:#8DC63F"></div>Directe deelname</div>
+  <div class="lc-item"><div class="lc-line" style="background:rgba(43,57,144,.4)"></div>Samenwerking</div>
+  <div class="lc-item"><div class="lc-line" style="background:#F7941D"></div>Zorg & ondersteuning</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  LEAFLET MAP
+// ═══════════════════════════════════════════════
+const map = L.map('map', {
+  center: [51.9255, 4.4882],
+  zoom: 15,
+  zoomControl: true,
+  attributionControl: false,
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  maxZoom:19
+}).addTo(map);
+
+// Rubroek boundary
+const rubroekBoundary = [
+  [51.9205, 4.4830],[51.9205, 4.4940],[51.9240, 4.4945],
+  [51.9270, 4.4935],[51.9310, 4.4925],[51.9315, 4.4870],
+  [51.9290, 4.4850],[51.9260, 4.4840],[51.9230, 4.4835],
+];
+L.polygon(rubroekBoundary, {
+  color:'#E31E24', weight:2.5, opacity:.7,
+  fillColor:'#E31E24', fillOpacity:.07, dashArray:'8 4',
+}).addTo(map);
+
+// Rubroek label
+L.marker([51.9308, 4.4872], {
+  icon: L.divIcon({
+    html:'<div style="font-family:Inter,sans-serif;font-size:12px;font-weight:800;color:#E31E24;letter-spacing:3px;text-transform:uppercase;white-space:nowrap;text-shadow:0 1px 3px rgba(255,255,255,.9)">RUBROEK</div>',
+    className:'', iconAnchor:[30,10],
+  }), interactive:false,
+}).addTo(map);
+
+// ── Map categories & dots ──
+const mapCats = {
+  winkels:   { color:'#EF9F27', label:'Winkels & Horeca'    },
+  zorg:      { color:'#1D9E75', label:'Zorg & Welzijn'      },
+  bedrijven: { color:'#D85A30', label:'Bedrijven & Diensten'},
+  onderwijs: { color:'#378ADD', label:'Onderwijs'           },
+  buurt:     { color:'#7F77DD', label:'Buurt & Jongeren'    },
+};
+
+const orgs = [
+  {n:"Ezzo Restaurant",d:"Restaurant",c:"winkels",lat:51.9277,lng:4.4870},
+  {n:"Dirck3 Rotterdam",d:"Slijterij",c:"winkels",lat:51.9241,lng:4.4948},
+  {n:"CurlyN",d:"Kapper",c:"winkels",lat:51.9260,lng:4.4865},
+  {n:"PHONE4ALL",d:"Telefoonreparatie",c:"winkels",lat:51.9258,lng:4.4864},
+  {n:"Burgers & Frites Noord",d:"Hamburgers",c:"winkels",lat:51.9274,lng:4.4874},
+  {n:"Carrabas speelgoed",d:"Speelgoedwinkel",c:"winkels",lat:51.9262,lng:4.4866},
+  {n:"New Joel Coffeehouse",d:"Espressobar",c:"winkels",lat:51.9267,lng:4.4868},
+  {n:"GSM Dokter",d:"Telefoonreparatie",c:"winkels",lat:51.9256,lng:4.4863},
+  {n:"Used Products Rotterdam",d:"Tweedehandswinkel",c:"winkels",lat:51.9254,lng:4.4863},
+  {n:"MRM STYLE",d:"Kapper",c:"winkels",lat:51.9257,lng:4.4864},
+  {n:"Taco Mundo",d:"Mexicaans restaurant",c:"winkels",lat:51.9252,lng:4.4856},
+  {n:"Café El Clasico",d:"Koffiehuis",c:"winkels",lat:51.9254,lng:4.4867},
+  {n:"Albert Heijn Goudsesingel",d:"Supermarkt",c:"winkels",lat:51.9247,lng:4.4878},
+  {n:"Avondwinkel Nightshop",d:"Avondwinkel",c:"winkels",lat:51.9249,lng:4.4871},
+  {n:"Papa John's",d:"Pizza",c:"winkels",lat:51.9245,lng:4.4900},
+  {n:"Man Nam",d:"Restaurant",c:"winkels",lat:51.9240,lng:4.4880},
+  {n:"Kruidvat",d:"Drogist",c:"winkels",lat:51.9242,lng:4.4937},
+  {n:"Dirk Supermarkt",d:"Supermarkt",c:"winkels",lat:51.9244,lng:4.4920},
+  {n:"Albert Heijn Goudse Rijweg",d:"Supermarkt",c:"winkels",lat:51.9283,lng:4.4890},
+  {n:"Barbershop Excellent",d:"Barbershop",c:"winkels",lat:51.9263,lng:4.4866},
+  {n:"Café De Stoof",d:"Café",c:"winkels",lat:51.9264,lng:4.4868},
+  {n:"Vagabond Barbers",d:"Barbershop",c:"winkels",lat:51.9275,lng:4.4871},
+  {n:"Bean",d:"Lunchroom",c:"winkels",lat:51.9268,lng:4.4868},
+  {n:"Wong's Place",d:"Surinaams restaurant",c:"winkels",lat:51.9270,lng:4.4869},
+  {n:"Wildhandel Treuren",d:"Wild & gevogelte",c:"winkels",lat:51.9238,lng:4.4890},
+  {n:"Mobrigado",d:"Portugees restaurant",c:"winkels",lat:51.9271,lng:4.4869},
+  {n:"Mr. Sushi Rotterdam",d:"Sushi restaurant",c:"winkels",lat:51.9246,lng:4.4876},
+  {n:"Malic Tweewielers",d:"Fietswinkel",c:"winkels",lat:51.9249,lng:4.4870},
+  // ZORG
+  {n:"Apotheek Rubroek",d:"Apotheek | Jonker Fransstraat 38",c:"zorg",lat:51.9279,lng:4.4869},
+  {n:"Rubroek Fysiotherapie",d:"Fysiotherapeut | Goudseplein 16",c:"zorg",lat:51.9285,lng:4.4888},
+  {n:"Huisartsenpraktijk Özveren",d:"Huisarts",c:"zorg",lat:51.9275,lng:4.4890},
+  {n:"Apotheek Rotterdam",d:"Apotheek",c:"zorg",lat:51.9240,lng:4.4910},
+  {n:"Mondhygiëne Rotterdam",d:"Mondhygiënist",c:"zorg",lat:51.9280,lng:4.4895},
+  {n:"Bergweg Tandartsen",d:"Tandarts",c:"zorg",lat:51.9282,lng:4.4900},
+  {n:"Auris Audiologisch Centrum",d:"Medisch centrum",c:"zorg",lat:51.9279,lng:4.4897},
+  {n:"Zorgwereld",d:"Fysiotherapie",c:"zorg",lat:51.9276,lng:4.4893},
+  {n:"Bento Clinics",d:"Medische kliniek",c:"zorg",lat:51.9278,lng:4.4898},
+  {n:"VAN SCHAIK en BYRMAN",d:"Huisarts",c:"zorg",lat:51.9280,lng:4.4893},
+  {n:"SamenSterk zorg",d:"Thuiszorg",c:"zorg",lat:51.9283,lng:4.4892},
+  {n:"Aafje Hoppesteyn",d:"Ouderenzorg",c:"zorg",lat:51.9290,lng:4.4905},
+  {n:"Middin – De Kade",d:"Gehandicaptenzorg",c:"zorg",lat:51.9288,lng:4.4900},
+  {n:"Wender Podotherapie",d:"Podotherapie",c:"zorg",lat:51.9281,lng:4.4894},
+  {n:"Caressa Dierenziekenhuis",d:"Dierenarts",c:"zorg",lat:51.9278,lng:4.4892},
+  // BEDRIJVEN
+  {n:"De Naaister Rotterdam",d:"Kledingreparatie",c:"bedrijven",lat:51.9242,lng:4.4905},
+  {n:"De Hypotheker",d:"Hypotheek",c:"bedrijven",lat:51.9247,lng:4.4884},
+  {n:"Yules masseert",d:"Massagetherapeut",c:"bedrijven",lat:51.9239,lng:4.4900},
+  {n:"Sunday's Rotterdam",d:"Zonnestudio",c:"bedrijven",lat:51.9244,lng:4.4908},
+  {n:"Sleutelcentrale Toller",d:"Slotenmaker",c:"bedrijven",lat:51.9241,lng:4.4903},
+  {n:"NAUTA architecture",d:"Architect",c:"bedrijven",lat:51.9285,lng:4.4895},
+  {n:"M1 Makelaardij",d:"Makelaardij",c:"bedrijven",lat:51.9275,lng:4.4888},
+  {n:"Lak Thai Massages",d:"Thaise massage",c:"bedrijven",lat:51.9238,lng:4.4898},
+  {n:"Wassalon Rotterdam",d:"Wasserette",c:"bedrijven",lat:51.9243,lng:4.4910},
+  {n:"City Bikes",d:"Fietsenwinkel",c:"bedrijven",lat:51.9236,lng:4.4892},
+  {n:"Universal T'ai Chi",d:"Tai Chi-school",c:"bedrijven",lat:51.9290,lng:4.4885},
+  {n:"Bovag Autobedrijf Alert",d:"Autobedrijf",c:"bedrijven",lat:51.9298,lng:4.4910},
+  {n:"Happy Cars Unal",d:"Autobedrijf",c:"bedrijven",lat:51.9296,lng:4.4912},
+  // ONDERWIJS
+  {n:"Waalse school",d:"Basisschool",c:"onderwijs",lat:51.9275,lng:4.4860},
+  {n:"OBS Crooswijk",d:"Basisonderwijs",c:"onderwijs",lat:51.9305,lng:4.4920},
+  {n:"Acato Bloemfleur",d:"Speciaal onderwijs",c:"onderwijs",lat:51.9295,lng:4.4908},
+  {n:"Mister Dutch",d:"Onderwijsinstelling",c:"onderwijs",lat:51.9288,lng:4.4898},
+  {n:"Kon. Wilhelmina School",d:"Basisschool",c:"onderwijs",lat:51.9300,lng:4.4915},
+  // BUURT
+  {n:"Wijkgebouw De Bron",d:"Buurthuis | Vondelweg 254",c:"buurt",lat:51.9253,lng:4.4891},
+  {n:"Pinkstergemeente Kom en Zie",d:"Gemeenschapsruimte",c:"buurt",lat:51.9292,lng:4.4910},
+  {n:"Nivon Rotterdam",d:"Cultureel centrum | Dirk Smitsstraat",c:"buurt",lat:51.9286,lng:4.4859},
+  {n:"Gymzaal Alkemadehof",d:"Sportcomplex",c:"buurt",lat:51.9268,lng:4.4876},
+  {n:"Cruyff Court Rubroek",d:"Buitensportlocatie",c:"buurt",lat:51.9272,lng:4.4880},
+];
+
+// Build map layer groups
+const mapLayers = {};
+const mapCounts = {};
+Object.keys(mapCats).forEach(c => { mapLayers[c] = L.layerGroup().addTo(map); mapCounts[c]=0; });
+
+orgs.forEach(org => {
+  mapCounts[org.c]++;
+  const cat = mapCats[org.c];
+  const m = L.circleMarker([org.lat, org.lng], {
+    radius:5.5, fillColor:cat.color, fillOpacity:.85,
+    color:'#fff', weight:1.5, opacity:1,
+  });
+  m.bindPopup(`
+    <div class="mp-cat" style="color:${cat.color}">${cat.label}</div>
+    <div class="mp-name">${org.n}</div>
+    <div style="color:#555;font-size:11px">${org.d}</div>
+  `, { closeButton:false, offset:[0,-4] });
+  m.on('mouseover', function(){ this.openPopup(); this.setStyle({radius:8,weight:2}); });
+  m.on('mouseout',  function(){ this.closePopup(); this.setStyle({radius:5.5,weight:1.5}); });
+  mapLayers[org.c].addLayer(m);
+});
+
+// Build map legend
+const legendMapEl = document.getElementById('legend-map');
+const activeMap = {};
+Object.keys(mapCats).forEach(cat => {
+  activeMap[cat] = true;
+  const row = document.createElement('div');
+  row.className = 'lm-item';
+  row.dataset.cat = cat;
+  row.innerHTML = `<div class="lm-dot" style="background:${mapCats[cat].color}"></div><span>${mapCats[cat].label}</span><span class="lm-count">${mapCounts[cat]}</span>`;
+  row.addEventListener('click', () => {
+    activeMap[cat] = !activeMap[cat];
+    activeMap[cat] ? mapLayers[cat].addTo(map) : map.removeLayer(mapLayers[cat]);
+    row.classList.toggle('dimmed', !activeMap[cat]);
+  });
+  legendMapEl.appendChild(row);
+});
+
+// ═══════════════════════════════════════════════
+//  D3 NETWORK OVERLAY
+// ═══════════════════════════════════════════════
+const W = window.innerWidth, H = window.innerHeight;
+
+// Network nodes
+const nodes = [
+  // CORE COALITION
+  { id:"pulse",        label:"PULSE",            category:"core",   size:50, description:"Ritme voor een veerkrachtige samenleving. Co-creatief programma dat jongeren, ouderen en zorgprofessionals in Rubroek verbindt via creativiteit, verbeeldingskracht en samenwerking. Van verkennen naar verankeren.", address:"Actief in wijk Rubroek", fixed:true, fx:W*.5, fy:H*.45 },
+  { id:"designteam",   label:"Design team",       category:"core",   size:33, description:"Samenwerkingsverband van Karabijn, Studio Laura Koenen en Stichting &. Regisseert Pulse, begeleidt social design processen en draagt zorg voor projectuitvoering.", address:"Projectregie & uitvoering Pulse" },
+  // LOCAL RUBROEK
+  { id:"laurens",      label:"Laurens",            category:"local",  size:31, description:"Grote ouderenzorgorganisatie in Rotterdam. Biedt praktijkervaring, pilotlocaties en betrokken professionals om samen met ouderen te experimenteren in de dagelijkse zorg.", address:"Crooswijksekade 15, Rotterdam" },
+  { id:"jongorg",      label:"Jongeren-\norganisaties", category:"local", size:27, description:"Jongerenwerkers in Rotterdam. Zorgen voor verbinding met jongeren uit diverse achtergronden en brengen kennis van informele ondersteuning en mentale gezondheid in.", address:"Actief in Rotterdam" },
+  { id:"gemeente",     label:"Gemeente\nRotterdam", category:"local", size:25, description:"Het Wmo-beleid vormt het beleidskader én een potentiële opschalingspartner. Via deze lijn verkennen we hoe inzichten doorwerken naar structurele gemeentelijke ondersteuning.", address:"Rotterdam" },
+  { id:"debron",       label:"Wijkgebouw\nDe Bron",category:"local",  size:25, description:"Kloppend hart van Rubroek. Laagdrempelig inlooppunt met activiteiten en advies.", address:"Vondelweg 254, Rotterdam" },
+  { id:"wijkteam",     label:"Wijkteam\nKralingen-Crooswijk", category:"local", size:23, description:"Team van professionals dat zorg en ondersteuning biedt aan bewoners van Rubroek.", address:"Actief in Rubroek" },
+  { id:"wijknetwerker",label:"Wijknetwerker\nRubroek", category:"local", size:21, description:"Wijknetwerker Geoffrey verbindt bewoners en helpt bij buurtinitiatieven.", address:"Boezemstraat 187, Rotterdam" },
+  { id:"buurtzorg",    label:"Buurtzorg\nKralingen", category:"local",size:21, description:"Thuiszorgorganisatie met kleine teams. Levert zorg aan huis voor bewoners van Rubroek.", address:"Actief in Rubroek" },
+  { id:"group",        label:"gro-up\nBuurtwerk", category:"local",  size:21, description:"Buurtwerk gericht op welzijn en sociale kwaliteit in de wijk.", address:"Actief in Kralingen-Crooswijk" },
+  // TARGET GROUPS
+  { id:"bewoners",     label:"Overige\nbewoners", category:"target", size:29, description:"8.400+ bewoners van Rubroek. 59% alleenstaanden, grote groep jongeren.", address:"Wijk Rubroek" },
+  { id:"ouderen",      label:"Ouderen\nbewonders",  category:"target", size:25, description:"Ouderen in verpleeghuizen, vaak afhankelijk van zorg en sociale interactie. Behoefte aan aandacht, verbinding en passende ondersteuning. Mede-ontwerpers van Pulse.", address:"" },
+  { id:"jongeren",     label:"Jongeren\nbewoners", category:"target", size:25, description:"Jongeren met mentale gezondheidsuitdagingen: eenzaamheid, prestatiedruk en onzekerheid over de toekomst. Baat bij herkenning, steun en laagdrempelige hulpverlening. Mede-ontwerpers van Pulse.", address:"" },
+  { id:"zorgprof",     label:"Zorg-\nprofessionals",category:"target",size:21, description:"Zorgprofessionals en welzijnswerkers die kwetsbare ouderen en jongeren begeleiden. Groeiende werkdruk en emotionele belasting. Samen op zoek naar nieuwe oplossingsrichtingen.", address:"" },
+  { id:"beleidsmakers",label:"Beleids-\nmakers",   category:"target", size:21, description:"Creëren kaders en voorzieningen om een inclusieve samenleving te realiseren. Effectief beleid vraagt om samenwerking en oog voor de menselijke maat.", address:"" },
+];
+
+const links = [
+  // Core coalition
+  { source:"designteam", target:"pulse", type:"coalition", s:.9 },
+  // Implementation partners
+  { source:"laurens", target:"pulse", type:"participation", s:.8 },
+  { source:"jongorg", target:"pulse", type:"participation", s:.8 },
+  { source:"gemeente", target:"pulse", type:"collaboration", s:.5 },
+  { source:"laurens", target:"designteam", type:"collaboration", s:.5 },
+  { source:"jongorg", target:"designteam", type:"collaboration", s:.4 },
+  { source:"gemeente", target:"designteam", type:"collaboration", s:.3 },
+  // Target groups
+  { source:"ouderen", target:"pulse", type:"participation", s:.7 },
+  { source:"jongeren", target:"pulse", type:"participation", s:.7 },
+  { source:"zorgprof", target:"pulse", type:"participation", s:.5 },
+  { source:"beleidsmakers", target:"pulse", type:"collaboration", s:.4 },
+  { source:"beleidsmakers", target:"gemeente", type:"collaboration", s:.5 },
+  { source:"ouderen", target:"laurens", type:"care", s:.8 },
+  { source:"jongeren", target:"jongorg", type:"care", s:.7 },
+  { source:"zorgprof", target:"laurens", type:"care", s:.5 },
+  { source:"ouderen", target:"buurtzorg", type:"care", s:.4 },
+  // Bewoners
+  { source:"bewoners", target:"debron", type:"participation", s:.7 },
+  { source:"bewoners", target:"wijknetwerker", type:"collaboration", s:.5 },
+  { source:"bewoners", target:"group", type:"participation", s:.4 },
+  { source:"bewoners", target:"wijkteam", type:"collaboration", s:.4 },
+  { source:"bewoners", target:"pulse", type:"participation", s:.3 },
+  { source:"ouderen", target:"bewoners", type:"participation", s:.3 },
+  { source:"jongeren", target:"bewoners", type:"participation", s:.3 },
+  // Local interconnections
+  { source:"wijknetwerker", target:"wijkteam", type:"collaboration", s:.5 },
+  { source:"wijknetwerker", target:"debron", type:"collaboration", s:.4 },
+  { source:"wijknetwerker", target:"group", type:"collaboration", s:.4 },
+  { source:"wijkteam", target:"laurens", type:"collaboration", s:.4 },
+  { source:"wijkteam", target:"buurtzorg", type:"collaboration", s:.3 },
+  { source:"group", target:"debron", type:"collaboration", s:.3 },
+  { source:"group", target:"jongorg", type:"collaboration", s:.3 },
+  { source:"debron", target:"pulse", type:"collaboration", s:.3 },
+  { source:"wijkteam", target:"pulse", type:"collaboration", s:.3 },
+];
+
+const catColors = { core:"#E31E24", local:"#2B3990", target:"#8DC63F" };
+const linkCol   = { coalition:"#E31E24", participation:"#8DC63F", collaboration:"rgba(43,57,144,.35)", care:"#F7941D" };
+const linkW     = { coalition:3.2, participation:2.4, collaboration:1.4, care:2 };
+const linkDash  = { coalition:"none", participation:"none", collaboration:"4 3", care:"6 3" };
+
+const svg = d3.select("#graph").attr("width",W).attr("height",H);
+const defs = svg.append("defs");
+
+// Glow
+const fg = defs.append("filter").attr("id","glow").attr("x","-50%").attr("y","-50%").attr("width","200%").attr("height","200%");
+fg.append("feGaussianBlur").attr("stdDeviation","5").attr("result","coloredBlur");
+const fm = fg.append("feMerge");
+fm.append("feMergeNode").attr("in","coloredBlur");
+fm.append("feMergeNode").attr("in","SourceGraphic");
+
+// Shadow
+const fs = defs.append("filter").attr("id","shadow").attr("x","-50%").attr("y","-50%").attr("width","200%").attr("height","200%");
+fs.append("feDropShadow").attr("dx",0).attr("dy",2).attr("stdDeviation","4").attr("flood-color","rgba(0,0,0,.14)");
+
+const g = svg.append("g");
+
+const simulation = d3.forceSimulation(nodes)
+  .force("link", d3.forceLink(links).id(d=>d.id).distance(d=>{
+    if(d.type==="coalition") return 100;
+    if(d.type==="participation") return 130;
+    if(d.type==="care") return 120;
+    return 150;
+  }).strength(d=>d.s*.35))
+  .force("charge", d3.forceManyBody().strength(d=>d.id==="pulse"?-650:-320))
+  .force("center", d3.forceCenter(W*.5, H*.45))
+  .force("collision", d3.forceCollide().radius(d=>d.size+20))
+  .force("x", d3.forceX(W*.5).strength(.05))
+  .force("y", d3.forceY(H*.45).strength(.05));
+
+const link = g.append("g")
+  .selectAll("line").data(links).join("line")
+  .attr("stroke", d=>linkCol[d.type])
+  .attr("stroke-width", d=>linkW[d.type])
+  .attr("stroke-linecap","round")
+  .attr("stroke-dasharray", d=>linkDash[d.type]);
+
+const node = g.append("g")
+  .selectAll("g").data(nodes).join("g")
+  .attr("cursor","grab")
+  .call(d3.drag()
+    .on("start",(e,d)=>{ if(!e.active) simulation.alphaTarget(.3).restart(); d.fx=d.x; d.fy=d.y; d3.select(e.sourceEvent.target.closest("g")).attr("cursor","grabbing"); })
+    .on("drag", (e,d)=>{ d.fx=e.x; d.fy=e.y; })
+    .on("end",  (e,d)=>{ if(!e.active) simulation.alphaTarget(0); if(d.id!=="pulse"){d.fx=null;d.fy=null;} })
+  );
+
+// Outer ring for core
+node.filter(d=>d.category==="core"&&d.id!=="pulse")
+  .append("circle").attr("r",d=>d.size+4)
+  .attr("fill","none").attr("stroke","rgba(227,30,36,.18)").attr("stroke-width",2);
+
+// White backdrop (readability over map)
+node.append("circle").attr("r",d=>d.size+2)
+  .attr("fill","rgba(255,255,255,.55)").attr("stroke","none");
+
+// Main circle
+node.append("circle").attr("r",d=>d.size)
+  .attr("fill",d=>catColors[d.category])
+  .attr("stroke","rgba(255,255,255,.8)").attr("stroke-width",d=>d.id==="pulse"?3:2)
+  .attr("filter",d=>d.id==="pulse"?"url(#glow)":"url(#shadow)")
+  .attr("opacity",.93);
+
+// Pulse dashed inner ring
+node.filter(d=>d.id==="pulse")
+  .append("circle").attr("r",40)
+  .attr("fill","none").attr("stroke","rgba(255,255,255,.3)").attr("stroke-width",2).attr("stroke-dasharray","4 4");
+
+// Labels
+node.each(function(d){
+  const lines = d.label.split("\n");
+  const el = d3.select(this);
+  const isPulse = d.id==="pulse";
+  const fs = isPulse?"19px":d.size>=28?"11px":"9px";
+  const lh = isPulse?15:d.size>=28?12.5:10.5;
+  lines.forEach((line,i)=>{
+    el.append("text")
+      .attr("text-anchor","middle")
+      .attr("dy",`${(i-(lines.length-1)/2)*lh+(isPulse?0:1)}px`)
+      .attr("fill","white")
+      .attr("font-size",fs)
+      .attr("font-weight",isPulse?"900":"600")
+      .attr("letter-spacing",isPulse?"2px":".2px")
+      .attr("pointer-events","none")
+      .text(line);
+  });
+});
+
+// Tooltip
+const tt = d3.select("#tooltip");
+const catLabel = { core:"Kerncoalitie Pulse", local:"Lokale organisatie Rubroek", target:"Bewoners & Doelgroep" };
+
+node.on("mouseenter",(event,d)=>{
+  let html = `<div class="tt-cat">${catLabel[d.category]}</div><div class="tt-name">${d.label.replace(/\n/g," ")}</div><div>${d.description}</div>`;
+  if(d.address) html += `<div class="tt-addr">${d.address}</div>`;
+  tt.html(html).style("opacity",1)
+    .style("left",(event.clientX+16)+"px")
+    .style("top",(event.clientY-12)+"px");
+
+  const conn = new Set([d.id]);
+  links.forEach(l=>{
+    const s = typeof l.source==="object"?l.source.id:l.source;
+    const t = typeof l.target==="object"?l.target.id:l.target;
+    if(s===d.id) conn.add(t);
+    if(t===d.id) conn.add(s);
+  });
+  node.selectAll("circle").transition().duration(200).attr("opacity",function(){
+    return conn.has(d3.select(this.parentNode).datum().id)?1:.1;
+  });
+  node.selectAll("text").transition().duration(200).attr("opacity",function(){
+    return conn.has(d3.select(this.parentNode).datum().id)?1:.1;
+  });
+  link.transition().duration(200)
+    .attr("opacity",l=>{
+      const s=typeof l.source==="object"?l.source.id:l.source;
+      const t=typeof l.target==="object"?l.target.id:l.target;
+      return (s===d.id||t===d.id)?1:.04;
+    })
+    .attr("stroke-width",l=>{
+      const s=typeof l.source==="object"?l.source.id:l.source;
+      const t=typeof l.target==="object"?l.target.id:l.target;
+      return (s===d.id||t===d.id)?linkW[l.type]*1.6:linkW[l.type];
+    });
+});
+node.on("mousemove",event=>{ tt.style("left",(event.clientX+16)+"px").style("top",(event.clientY-12)+"px"); });
+node.on("mouseleave",()=>{
+  tt.style("opacity",0);
+  node.selectAll("circle").transition().duration(300).attr("opacity",.93);
+  node.selectAll("text").transition().duration(300).attr("opacity",1);
+  link.transition().duration(300).attr("opacity",1).attr("stroke-width",d=>linkW[d.type]);
+});
+
+// Network legend filtering
+d3.selectAll(".ln-item").on("click",function(){
+  const cat = d3.select(this).attr("data-cat");
+  const isActive = d3.select(this).classed("active");
+  if(isActive){
+    d3.selectAll(".ln-item").classed("active",false).style("opacity",1);
+    node.selectAll("circle").transition().duration(300).attr("opacity",.93);
+    node.selectAll("text").transition().duration(300).attr("opacity",1);
+    link.transition().duration(300).attr("opacity",1);
+  } else {
+    d3.selectAll(".ln-item").classed("active",false).style("opacity",.35);
+    d3.select(this).classed("active",true).style("opacity",1);
+    const cn = new Set(nodes.filter(n=>n.category===cat||n.id==="pulse").map(n=>n.id));
+    node.selectAll("circle").transition().duration(300).attr("opacity",function(){
+      return cn.has(d3.select(this.parentNode).datum().id)?1:.08;
+    });
+    node.selectAll("text").transition().duration(300).attr("opacity",function(){
+      return cn.has(d3.select(this.parentNode).datum().id)?1:.08;
+    });
+    link.transition().duration(300).attr("opacity",l=>{
+      const s=typeof l.source==="object"?l.source.id:l.source;
+      const t=typeof l.target==="object"?l.target.id:l.target;
+      return (cn.has(s)||cn.has(t))?.8:.03;
+    });
+  }
+});
+
+// Tick
+simulation.on("tick",()=>{
+  link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y)
+      .attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);
+  node.attr("transform",d=>`translate(${d.x},${d.y})`);
+});
+
+// Resize
+window.addEventListener("resize",()=>{
+  const w=window.innerWidth, h=window.innerHeight;
+  svg.attr("width",w).attr("height",h);
+  nodes.find(n=>n.id==="pulse").fx=w*.5;
+  nodes.find(n=>n.id==="pulse").fy=h*.45;
+  simulation.force("center",d3.forceCenter(w*.5,h*.45))
+    .force("x",d3.forceX(w*.5).strength(.05))
+    .force("y",d3.forceY(h*.45).strength(.05))
+    .alpha(.3).restart();
+});
+</script>
+</body>
+</html>

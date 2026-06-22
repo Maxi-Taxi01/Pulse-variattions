@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rubroek — Interviewanalyse Ouderen</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --red: #E31E24; --blue: #2B3990; --green: #8DC63F; --amber: #8DC63F;
+    --purple: #E31E24; --teal: #378ADD; --orange: #D85A30; --pink: #D4537E;
+    --bg: #FAFAFA; --bg-warm: #FAE8E8; --bg-cool: #EEF0F8;
+    --card: #ffffff; --text: #1a1a2e; --muted: #555;
+    --border: #e2e3ea; --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+
+  /* ── NAV ── */
+  nav#navbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    padding: 0 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+    transition: box-shadow 0.3s;
+    font-family: 'Inter', -apple-system, sans-serif;
+  }
+  nav#navbar.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
+  .nav-logo {
+    font-size: 24px; font-weight: 900; color: #E31E24;
+    letter-spacing: -0.5px; text-decoration: none;
+  }
+  .nav-logo span { font-weight: 400; color: #2B3990; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-left: 8px; }
+  .nav-links { display: flex; gap: 6px; align-items: center; }
+  .nav-links a {
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; color: #555;
+    text-decoration: none; transition: all 0.2s;
+  }
+  .nav-links a:hover, .nav-links a.active {
+    background: #FAE8E8; color: #E31E24;
+  }
+  .nav-dropdown { position: relative; }
+  .nav-dropdown > span {
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; color: #555;
+    cursor: pointer; transition: all 0.2s; user-select: none;
+  }
+  .nav-dropdown:hover > span { background: #FAE8E8; color: #E31E24; }
+  .nav-dropdown .dropdown-menu {
+    display: none; position: absolute; top: 100%; left: 0;
+    background: #fff; border-radius: 12px; padding: 6px 0;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12); min-width: 160px;
+    z-index: 1001; margin-top: 4px;
+  }
+  .nav-dropdown:hover .dropdown-menu { display: block; }
+  .nav-dropdown .dropdown-menu a {
+    display: block; padding: 8px 18px; border-radius: 0;
+    font-size: 12px; white-space: nowrap;
+  }
+  .nav-dropdown .dropdown-menu a:hover { background: #FAE8E8; color: #E31E24; }
+  .nav-hamburger { display: none; background: none; border: none; cursor: pointer; padding: 8px; }
+  .nav-hamburger svg { width: 24px; height: 24px; stroke: #1a1a2e; }
+
+  @media (max-width: 768px) {
+    .nav-links {
+      display: none; position: fixed; top: 60px; left: 0; right: 0;
+      background: rgba(255,255,255,0.98); backdrop-filter: blur(20px);
+      flex-direction: column; padding: 16px; gap: 4px;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .nav-links.open { display: flex; }
+    .nav-links a { padding: 12px 16px; border-radius: 12px; font-size: 14px; }
+    .nav-hamburger { display: block; }
+    .nav-dropdown .dropdown-menu {
+      position: static; box-shadow: none; margin-top: 0;
+      padding-left: 16px; display: none;
+    }
+    .nav-dropdown.open .dropdown-menu { display: block; }
+    .nav-dropdown > span { padding: 12px 16px; font-size: 14px; display: block; }
+  }
+
+  .header {
+    background: linear-gradient(160deg, var(--bg-warm) 0%, #fff 52%, var(--bg-cool) 100%);
+    color: var(--text); padding: 92px 32px 22px;
+    border-top: 4px solid var(--red);
+    border-bottom: 1px solid rgba(43,57,144,0.08);
+  }
+  .header h1 { color: var(--blue); font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  .header .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .tabs { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  .tab-btn {
+    background: rgba(255,255,255,0.82); color: var(--blue);
+    border: 1px solid rgba(43,57,144,0.12); padding: 9px 18px;
+    border-radius: 20px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all .2s; box-shadow: 0 2px 8px rgba(43,57,144,.05);
+  }
+  .tab-btn:hover { background: var(--bg-warm); color: var(--red); border-color: rgba(227,30,36,.18); }
+  .tab-btn.active { background: var(--red); color: #fff; border-color: var(--red); box-shadow: 0 4px 16px rgba(227,30,36,.22); }
+
+  .container { max-width: 1140px; margin: 0 auto; padding: 28px 24px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card { background: var(--card); border: 1px solid rgba(43,57,144,.06); border-radius: 16px; box-shadow: var(--shadow); padding: 22px; margin-bottom: 16px; }
+  .card-green { border-left: 4px solid var(--green); }
+  .card-red { border-left: 4px solid var(--red); }
+  .card-blue { border-top: 4px solid var(--blue); }
+  .card-purple { border-top: 4px solid var(--purple); }
+  .card-amber { border-top: 4px solid var(--amber); }
+  .card-advice { background: linear-gradient(135deg, var(--bg-warm), var(--bg-cool)); border: 1px solid rgba(227,30,36,.15); }
+
+  .section-title { color: var(--blue); font-size: 20px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.25px; }
+  .section-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .grid-2, .grid-3, .grid-5, .grid-2-1 { grid-template-columns: 1fr; } }
+
+  .iv-card { background: #fff; border: 2px solid var(--border); border-radius: 14px; padding: 16px; cursor: pointer; transition: all .2s; }
+  .iv-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+  .iv-card.selected { border-color: var(--red); background: var(--bg-warm); box-shadow: 0 4px 16px rgba(227,30,36,.14); }
+  .iv-card.kern { border-color: rgba(43,57,144,.24); }
+  .iv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .iv-id { font-size: 18px; font-weight: 700; color: var(--muted); }
+  .badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+  .badge-kern { background: var(--bg-warm); color: var(--red); }
+  .badge-aanv { background: var(--bg-cool); color: var(--blue); }
+  .badge-beperkt { background: #f1f5f9; color: #475569; }
+  .iv-profiel { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .detail { display: none; margin-top: 16px; }
+  .detail.show { display: block; animation: fadeIn .3s; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .detail h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .detail h4.groen { color: var(--green); }
+  .detail h4.rood { color: var(--red); }
+  .detail h4.paars { color: var(--purple); }
+  .detail h4.grijs { color: var(--muted); }
+  .detail p { font-size: 13px; color: #475569; }
+  .detail .label { font-weight: 600; color: var(--text); }
+  .thema-row { display: flex; align-items: center; gap: 14px; background: #fff; border-radius: 10px; padding: 12px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.04); border: 1px solid #f1f5f9; margin-bottom: 8px; }
+  .thema-icon { font-size: 26px; flex-shrink: 0; }
+  .thema-info { flex: 1; }
+  .thema-name { font-size: 14px; font-weight: 600; }
+  .thema-ids { font-size: 11px; color: var(--muted); }
+  .dots { display: flex; gap: 4px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .cluster-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .cluster-title .dot-lg { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .score-badge { font-size: 12px; padding: 2px 10px; border-radius: 20px; font-weight: 700; }
+  .score-good { background: #eef6e4; color: #4f741e; }
+  .score-mid { background: #fef3c7; color: #92400e; }
+  .score-bad { background: #fee2e2; color: #991b1b; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tag { font-size: 11px; padding: 3px 10px; border-radius: 20px; }
+  .tag-green { background: #eef6e4; color: #4f741e; }
+  .tag-red { background: var(--bg-warm); color: #a5161b; }
+  .place-header { display: flex; justify-content: space-between; align-items: center; }
+  .concl-card { display: flex; gap: 16px; align-items: flex-start; }
+  .concl-num { width: 42px; height: 42px; border-radius: 50%; background: var(--bg-warm); color: var(--red); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; flex-shrink: 0; }
+  .concl-title { font-weight: 600; font-size: 15px; }
+  .concl-text { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+  .criteria-item { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+  .criteria-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+  .criteria-text { font-size: 13px; color: #475569; }
+  .cat-title { font-weight: 600; font-size: 15px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .chart-wrap { position: relative; width: 100%; max-width: 100%; }
+  .chart-wrap canvas { width: 100% !important; }
+  .map-atlas-card { padding: 0; overflow: hidden; }
+  .map-atlas-header {
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    padding: 18px 22px; border-bottom: 1px solid var(--border);
+  }
+  .map-atlas-header a {
+    flex-shrink: 0; color: var(--red); font-size: 13px; font-weight: 700;
+    text-decoration: none;
+  }
+  .map-atlas-header a:hover { text-decoration: underline; }
+  .map-atlas-frame { display: block; width: 100%; height: 760px; border: 0; background: #fff; }
+  @media (max-width: 768px) {
+    .map-atlas-header { align-items: flex-start; flex-direction: column; }
+    .map-atlas-frame { height: 680px; }
+  }
+
+</style>
+</head>
+<body>
+
+<nav id="navbar">
+  <a href="index.html" class="nav-logo">pulse <span>Rubroek</span></a>
+  <button class="nav-hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="nav-links">
+    <a href="index.html#over">Over Pulse</a>
+    <a href="index.html#wijk">Wijk Rubroek</a>
+    <a href="index.html#kaart">Kaart</a>
+    <a href="index.html#systeem">Systeemkaart</a>
+    <a href="index.html#systemmap">System Map</a>
+    <a href="index.html#organisaties">Organisaties</a>
+    <a href="index.html#aanpak">Aanpak</a>
+    <a href="index.html#coalitie">Coalitie</a>
+    <div class="nav-dropdown" onclick="this.classList.toggle('open')">
+      <span>Interviews &#9662;</span>
+      <div class="dropdown-menu">
+        <a href="index.html#jongeren">Jongeren</a>
+        <a href="ouderen-interviews.html" class="active">Ouderen</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="header">
+  <h1>Rubroek — Interviewanalyse Ouderen</h1>
+  <div class="sub">Wijk Rubroek, Rotterdam &middot; 5 interviews &middot; 7 thema's</div>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="overzicht">Interviews</button>
+    <button class="tab-btn" data-tab="thema">Thema's</button>
+    <button class="tab-btn" data-tab="cluster">Clusteranalyse</button>
+    <button class="tab-btn" data-tab="conclusies">Conclusies</button>
+    <button class="tab-btn" data-tab="ontwerp">Ontwerpvertaling</button>
+    <button class="tab-btn" data-tab="systeemkaarten">Systeemkaarten</button>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== INTERVIEWS ===== -->
+<div class="panel active" id="overzicht">
+  <div class="section-title">Overzichtstabel Interviews</div>
+  <div class="section-sub">Klik op een interview voor details</div>
+  <div class="grid-5" id="iv-grid"></div>
+  <div class="detail" id="iv-detail"></div>
+</div>
+
+<!-- ===== THEMA'S ===== -->
+<div class="panel" id="thema">
+  <div class="section-title">Thematische Codering</div>
+  <div class="section-sub">7 thema's gecodeerd uit de interviews</div>
+  <div class="grid-2">
+    <div class="card">
+      <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px;">Frequentie per thema</div>
+      <div class="chart-wrap"><canvas id="themaChart" height="300"></canvas></div>
+    </div>
+    <div id="thema-list"></div>
+  </div>
+</div>
+
+<!-- ===== CLUSTER ===== -->
+<div class="panel" id="cluster">
+  <div class="section-title">Clusteranalyse</div>
+  <div class="section-sub">Sterke plekken vs. probleemplekken op basis van interviews en stickerkaart</div>
+  <div class="grid-2">
+    <div>
+      <div class="cluster-title"><span class="dot-lg" style="background:var(--green)"></span> Sterke plekken</div>
+      <div id="sterke-list"></div>
+    </div>
+    <div>
+      <div class="cluster-title"><span class="dot-lg" style="background:var(--red)"></span> Probleemplekken</div>
+      <div id="probleem-list"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:20px;">
+    <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px;">Kwaliteitsprofiel per plek (radar)</div>
+    <div class="chart-wrap" style="max-width:700px;margin:0 auto;"><canvas id="radarChart" height="380"></canvas></div>
+  </div>
+</div>
+
+<!-- ===== CONCLUSIES ===== -->
+<div class="panel" id="conclusies">
+  <div class="section-title">Conclusies &amp; Behoeften</div>
+  <div class="section-sub">Vijf hoofdconclusies en wat ouderen missen</div>
+  <div class="grid-2-1">
+    <div id="concl-list"></div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:600;color:var(--purple);margin-bottom:12px;">Wat mist in de wijk?</div>
+      <div class="chart-wrap"><canvas id="pieChart" height="280"></canvas></div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;">Frequentie van genoemde behoeften</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ONTWERP ===== -->
+<div class="panel" id="ontwerp">
+  <div class="section-title">Ontwerpvertaling</div>
+  <div class="section-sub">Directe vertaling van interviews naar ontwerpcriteria</div>
+  <div class="grid-3">
+    <div class="card card-blue">
+      <div class="cat-title" style="color:var(--blue);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+        Ruimtelijk
+      </div>
+      <div id="ontwerp-ruimtelijk"></div>
+    </div>
+    <div class="card card-purple">
+      <div class="cat-title" style="color:var(--purple);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Sociaal
+      </div>
+      <div id="ontwerp-sociaal"></div>
+    </div>
+    <div class="card card-amber">
+      <div class="cat-title" style="color:var(--amber);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Strategische locatiecriteria
+      </div>
+      <div id="ontwerp-strategie"></div>
+    </div>
+  </div>
+  <div class="card card-advice" style="margin-top:20px;">
+    <div style="font-weight:700;color:var(--red);margin-bottom:8px;font-size:16px;">Kernadvies</div>
+    <p style="font-size:14px;color:#475569;line-height:1.7;">De grootste kans voor het project zit niet alleen in het verbeteren van losse buitenplekken, maar in het <strong>creëren van een plek waar ontmoeting, rust en activiteit samenkomen</strong> — nabij bestaande voorzieningen, aan een groene route, en dichtbij de WijkHub. Gebruik interview 3, 4 en 5 als kern van de ouderenanalyse.</p>
+  </div>
+</div>
+
+<!-- ===== SYSTEEMKAARTEN ===== -->
+<div class="panel" id="systeemkaarten">
+  <div class="section-title">Individuele systeemkaarten</div>
+  <div class="section-sub">Interactieve atlas met de gecombineerde kaart en kaarten per geïnterviewde</div>
+  <div class="card map-atlas-card">
+    <div class="map-atlas-header">
+      <div>
+        <strong>Bewoners en zorgprofessionals</strong>
+        <div class="section-sub" style="margin:4px 0 0;">Kies een persoon, bekijk relaties en download de zichtbare kaart als SVG.</div>
+      </div>
+      <a href="individual-system-maps/index.html" target="_blank" rel="noopener">Open volledig scherm &rarr;</a>
+    </div>
+    <iframe
+      class="map-atlas-frame"
+      src="individual-system-maps/index.html"
+      loading="lazy"
+      title="Individuele systeemkaarten uit de interviews"
+    ></iframe>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+/* ============ DATA ============ */
+const interviews = [
+  { id:1, profiel:"Woont sinds 2002, postbode in Rubroek", groen:"Onder Warandeweg (links)", groenW:"Schoon, rustig, vooruitgegaan sinds studenten weg zijn", rood:"Goudse Rijweg (rechtsboven/midden)", roodW:"Achteruitgang, ervaren racisme, minder prettig klimaat", mist:"Leuke samenkomstplek met activiteiten", opm:"Wijkperspectief", brk:"Aanvullend" },
+  { id:2, profiel:"Onvolledig", groen:"Hele wijk, vooral linksonder", groenW:"Algemeen groen beeld", rood:"Niet duidelijk", roodW:"Niet duidelijk", mist:"Niet genoemd", opm:"Globale observatie", brk:"Beperkt" },
+  { id:3, profiel:"35 jaar in Rubroek, gepensioneerd elektricien, woont alleen", groen:"Oostplein", groenW:"Markt, metro, Meent dichtbij, levendig, goed bereikbaar", rood:"Boezemweg", roodW:"Rommel, fietsen verkeerd geplaatst, slechte verlichting, donker", mist:"Bankjes, vastigheid, meer contact", opm:"Sterk oudereninterview", brk:"Kern" },
+  { id:4, profiel:"30+ jaar in Rubroek, Herman Robbersstraat", groen:"Park midden in de wijk", groenW:"Rustig, groen, bankjes, buurtgevoel", rood:"Goudsesingel", roodW:"Druk verkeer, smalle stoepen, onveilig voor ouderen", mist:"Ontmoetingsplek, meer bankjes", opm:"Sterk oudereninterview", brk:"Kern" },
+  { id:5, profiel:"40 jaar in de wijk", groen:"Park midden-zuiden, Boezemsingel", groenW:"Rustig, bankjes, groen, water, nabij WijkHub", rood:"Ammanplein, kruising ZO", roodW:"Vervallen, druk, lastig met rollator", mist:"Ontmoetingsplek, overdekte zitplek", opm:"Sterk oudereninterview", brk:"Kern" }
+];
+const themas = [
+  { thema:"Groen & rust", n:3, ids:"2, 4, 5", icon:"\u{1F33F}", color:"#8DC63F" },
+  { thema:"Bankjes & rustpunten", n:3, ids:"3, 4, 5", icon:"\u{1FA91}", color:"#2B3990" },
+  { thema:"Bereikbaarheid", n:2, ids:"3, 5", icon:"\u{1F6B6}", color:"#378ADD" },
+  { thema:"Verkeersveiligheid", n:2, ids:"4, 5", icon:"\u26A0\uFE0F", color:"#EF9F27" },
+  { thema:"Avondveiligheid", n:1, ids:"3", icon:"\u{1F319}", color:"#7F77DD" },
+  { thema:"Onderhoud", n:3, ids:"3, 5, 1", icon:"\u{1F9F9}", color:"#D85A30" },
+  { thema:"Ontmoeting", n:4, ids:"1, 3, 4, 5", icon:"\u{1F91D}", color:"#E31E24" }
+];
+const sterke = [
+  { naam:"Oostplein", tags:["Nabijheid markt/metro/Meent","Levendig maar niet storend","Goed bereikbaar"], score:4.2 },
+  { naam:"Park midden/zuiden", tags:["Rust, groen en bankjes","Buurtgevoel","Prettige verblijfsplek"], score:4.7 },
+  { naam:"Boezemsingel", tags:["Rustig lopen langs water","Groen en zitmogelijkheden","Nabij WijkHub"], score:4.3 },
+  { naam:"Onder Warandeweg", tags:["Schoner deel van de wijk","Rustiger sfeer"], score:3.8 }
+];
+const probleem = [
+  { naam:"Boezemweg", tags:["Rommel op straat","Fietsen verkeerd","Slechte verlichting","Onaangenaam alleen"], score:1.8 },
+  { naam:"Goudsesingel", tags:["Druk verkeer","Smalle stoepen","Onveilig voor ouderen"], score:2.0 },
+  { naam:"Ammanplein", tags:["Vervallen","Niet gezellig","Geen verblijfskwaliteit"], score:1.5 },
+  { naam:"Kruising ZO-rand", tags:["Druk","Lastig met rollator"], score:1.7 }
+];
+const conclusies = [
+  { nr:1, t:"Groen alleen is niet genoeg", txt:"Groene plekken worden gewaardeerd, maar vooral als ze ook bankjes, rust en goede bereikbaarheid hebben." },
+  { nr:2, t:"Verblijven, niet alleen passeren", txt:"De fijne plekken zijn plekken waar je kunt zitten, kijken, rusten en mensen tegenkomen." },
+  { nr:3, t:"Verkeersdruk als barri\u00e8re", txt:"Drukke wegen, smalle stoepen en lastige kruisingen maken delen van Rubroek onveilig voor ouderen." },
+  { nr:4, t:"Sociale ankerpunten ontbreken", txt:"Respondenten noemen expliciet een ontmoetingsplek, activiteitenplek en meer buurtbinding." },
+  { nr:5, t:"Sfeer en beheer bepalen kwaliteit", txt:"Rommel, slecht licht en vervallen uitstraling maken plekken snel minder prettig." }
+];
+const ontwerpR = ["Meer bankjes op logische looproutes tussen voorzieningen","Rustige verblijfsplekken in het groen","Rollatorvriendelijk en goed toegankelijk","Betere verlichting op onprettige routes en donkere zones","Aanpak rommel, fout gestalde fietsen en vervallen uitstraling","Veiligere drukke randen (stoepbreedte, oversteekbaarheid)"];
+const ontwerpS = ["Laagdrempelige ontmoetingsplek voor buurtbewoners","Activiteiten koppelen aan de plek","Sociale samenhang versterken: elkaar zien, even zitten","Overdekte zitplek (weeronafhankelijk gebruik)"];
+const ontwerpSt = ["Nabij bestaande voorzieningen","Aan rustige groene routes","Dichtbij ouderenvoorzieningen / WijkHub","Niet direct aan drukke verkeersranden","Waar ontmoeting al deels gebeurt"];
+
+/* ============ TABS ============ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ============ INTERVIEWS ============ */
+let selectedIv = null;
+const ivGrid = document.getElementById('iv-grid');
+const ivDetail = document.getElementById('iv-detail');
+interviews.forEach(iv => {
+  const badgeCls = iv.brk === 'Kern' ? 'badge-kern' : iv.brk === 'Aanvullend' ? 'badge-aanv' : 'badge-beperkt';
+  const el = document.createElement('div');
+  el.className = `iv-card ${iv.brk === 'Kern' ? 'kern' : ''}`;
+  el.dataset.id = iv.id;
+  el.innerHTML = `<div class="iv-header"><span class="iv-id">#${iv.id}</span><span class="badge ${badgeCls}">${iv.brk}</span></div><div class="iv-profiel">${iv.profiel}</div>`;
+  el.addEventListener('click', () => {
+    if (selectedIv === iv.id) { selectedIv = null; ivDetail.classList.remove('show'); ivDetail.innerHTML = ''; }
+    else {
+      selectedIv = iv.id;
+      ivDetail.innerHTML = `<div class="card card-green"><div class="detail-grid">
+        <div><h4 class="groen">\u{1F7E2} Groene plek(ken)</h4><p class="label">${iv.groen}</p><p>${iv.groenW}</p></div>
+        <div><h4 class="rood">\u{1F534} Rode plek(ken)</h4><p class="label">${iv.rood}</p><p>${iv.roodW}</p></div>
+        <div><h4 class="paars">\u{1F4AC} Wat mist</h4><p>${iv.mist}</p></div>
+        <div><h4 class="grijs">\u{1F4DD} Opmerking</h4><p>${iv.opm}</p></div>
+      </div></div>`;
+      ivDetail.classList.add('show');
+    }
+    document.querySelectorAll('.iv-card').forEach(c => c.classList.toggle('selected', +c.dataset.id === selectedIv));
+  });
+  ivGrid.appendChild(el);
+});
+
+/* ============ THEMA ============ */
+const themaList = document.getElementById('thema-list');
+themas.forEach(t => {
+  const dots = Array.from({length:t.n}, () => `<span class="dot" style="background:${t.color}"></span>`).join('');
+  themaList.innerHTML += `<div class="thema-row"><span class="thema-icon">${t.icon}</span><div class="thema-info"><div class="thema-name">${t.thema}</div><div class="thema-ids">Interviews: ${t.ids}</div></div><div class="dots">${dots}</div></div>`;
+});
+new Chart(document.getElementById('themaChart'), {
+  type:'bar', data:{ labels:themas.map(t=>t.thema), datasets:[{ data:themas.map(t=>t.n), backgroundColor:themas.map(t=>t.color), borderRadius:6, barThickness:22 }] },
+  options:{ indexAxis:'y', responsive:true, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+' interviews'}}}, scales:{x:{max:5,ticks:{stepSize:1}},y:{ticks:{font:{size:11}}}} }
+});
+
+/* ============ CLUSTER ============ */
+function scoreBadge(s){ const c=s>=3.5?'score-good':s>=2.5?'score-mid':'score-bad'; return `<span class="score-badge ${c}">${s.toFixed(1)}/5</span>`; }
+function renderPlaces(d,id,tc){ const el=document.getElementById(id); d.forEach(p=>{ const tags=p.tags.map(t=>`<span class="tag ${tc}">${t}</span>`).join(''); el.innerHTML+=`<div class="card ${tc==='tag-green'?'card-green':'card-red'}"><div class="place-header"><span style="font-weight:600">${p.naam}</span>${scoreBadge(p.score)}</div><div class="tags">${tags}</div></div>`; }); }
+renderPlaces(sterke,'sterke-list','tag-green');
+renderPlaces(probleem,'probleem-list','tag-red');
+new Chart(document.getElementById('radarChart'), {
+  type:'radar', data:{ labels:['Groen','Rust','Bankjes','Bereikbaar','Veiligheid','Sfeer'],
+  datasets:[
+    {label:'Oostplein',data:[3,3,3,5,4,4],borderColor:'#2B3990',backgroundColor:'#2B399018',borderWidth:2,pointRadius:3,pointBackgroundColor:'#2B3990'},
+    {label:'Park',data:[5,5,5,4,4,5],borderColor:'#8DC63F',backgroundColor:'#8DC63F18',borderWidth:2,pointRadius:3,pointBackgroundColor:'#8DC63F'},
+    {label:'Boezemsingel',data:[4,5,4,3,4,4],borderColor:'#378ADD',backgroundColor:'#378ADD18',borderWidth:2,pointRadius:3,pointBackgroundColor:'#378ADD'},
+    {label:'Boezemweg',data:[1,2,1,3,2,1],borderColor:'#E31E24',backgroundColor:'#E31E2418',borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:'#E31E24'},
+    {label:'Goudsesingel',data:[1,1,1,4,1,2],borderColor:'#D85A30',backgroundColor:'#D85A3018',borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:'#D85A30'},
+    {label:'Ammanplein',data:[1,2,1,3,2,1],borderColor:'#D4537E',backgroundColor:'#D4537E18',borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:'#D4537E'}
+  ]},
+  options:{ responsive:true, scales:{r:{min:0,max:5,ticks:{stepSize:1,font:{size:10}},pointLabels:{font:{size:12}}}}, plugins:{legend:{position:'bottom',labels:{font:{size:11},usePointStyle:true,pointStyle:'circle'}}} }
+});
+
+/* ============ CONCLUSIES ============ */
+const conclList=document.getElementById('concl-list');
+conclusies.forEach(c=>{ conclList.innerHTML+=`<div class="card concl-card"><div class="concl-num">${c.nr}</div><div><div class="concl-title">${c.t}</div><div class="concl-text">${c.txt}</div></div></div>`; });
+new Chart(document.getElementById('pieChart'), {
+  type:'doughnut', data:{ labels:['Ontmoetingsplek','Meer bankjes','Overdekte zitplek','Sociale vastigheid','Activiteiten'],
+  datasets:[{data:[4,3,2,2,2],backgroundColor:['#E31E24','#2B3990','#378ADD','#8DC63F','#D4537E'],borderWidth:2,borderColor:'#fff'}]},
+  options:{responsive:true,cutout:'50%',plugins:{legend:{position:'bottom',labels:{font:{size:11},usePointStyle:true,pointStyle:'circle'}}}}
+});
+
+/* ============ ONTWERP ============ */
+function rc(items,id,col){ const el=document.getElementById(id); items.forEach(t=>{ el.innerHTML+=`<div class="criteria-item"><span class="criteria-dot" style="background:${col}"></span><span class="criteria-text">${t}</span></div>`; }); }
+rc(ontwerpR,'ontwerp-ruimtelijk','var(--blue)');
+rc(ontwerpS,'ontwerp-sociaal','var(--purple)');
+rc(ontwerpSt,'ontwerp-strategie','var(--amber)');
+</script>
+</body>
+</html>

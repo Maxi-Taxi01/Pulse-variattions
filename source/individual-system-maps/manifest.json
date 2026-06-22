@@ -1,0 +1,129 @@
+{
+  "generatedAt": "2026-06-19T03:44:28.103Z",
+  "mapCount": 15,
+  "individualMapCount": 13,
+  "originalCodedSubjectCount": 145,
+  "combinedVariableCount": 24,
+  "maps": [
+    {
+      "id": "alle-interviews",
+      "group": "Gecombineerd",
+      "name": "Alle interviews – geïntegreerde systeemkaart",
+      "topics": 24,
+      "svg": "svg/alle-interviews.svg",
+      "png": "png/alle-interviews.png"
+    },
+    {
+      "id": "alle-interviews-letterlijk",
+      "group": "Gecombineerd",
+      "name": "Alle interviews – letterlijke interviewtaal",
+      "topics": 24,
+      "svg": "svg/alle-interviews-letterlijk.svg",
+      "png": "png/alle-interviews-letterlijk.png"
+    },
+    {
+      "id": "arie",
+      "group": "Bewoners",
+      "name": "Arie",
+      "topics": 12,
+      "svg": "svg/arie.svg",
+      "png": "png/arie.png"
+    },
+    {
+      "id": "coby",
+      "group": "Bewoners",
+      "name": "Coby",
+      "topics": 5,
+      "svg": "svg/coby.svg",
+      "png": "png/coby.png"
+    },
+    {
+      "id": "cor",
+      "group": "Bewoners",
+      "name": "Cor",
+      "topics": 5,
+      "svg": "svg/cor.svg",
+      "png": "png/cor.png"
+    },
+    {
+      "id": "evelina",
+      "group": "Bewoners",
+      "name": "Evelina",
+      "topics": 11,
+      "svg": "svg/evelina.svg",
+      "png": "png/evelina.png"
+    },
+    {
+      "id": "nico",
+      "group": "Bewoners",
+      "name": "Nico",
+      "topics": 13,
+      "svg": "svg/nico.svg",
+      "png": "png/nico.png"
+    },
+    {
+      "id": "identiteit",
+      "group": "Bewoners",
+      "name": "Bewoner – genderidentiteit",
+      "topics": 5,
+      "svg": "svg/identiteit.svg",
+      "png": "png/identiteit.png"
+    },
+    {
+      "id": "onderwijzeres",
+      "group": "Bewoners",
+      "name": "Oud-onderwijzeres uit Suriname",
+      "topics": 10,
+      "svg": "svg/onderwijzeres.svg",
+      "png": "png/onderwijzeres.png"
+    },
+    {
+      "id": "jan",
+      "group": "Bewoners",
+      "name": "Jan",
+      "topics": 12,
+      "svg": "svg/jan.svg",
+      "png": "png/jan.png"
+    },
+    {
+      "id": "zelfredzame-man",
+      "group": "Bewoners",
+      "name": "Zelfredzame bewoner",
+      "topics": 17,
+      "svg": "svg/zelfredzame-man.svg",
+      "png": "png/zelfredzame-man.png"
+    },
+    {
+      "id": "dick",
+      "group": "Zorgprofessionals",
+      "name": "Dick – muziektherapeut",
+      "topics": 15,
+      "svg": "svg/dick.svg",
+      "png": "png/dick.png"
+    },
+    {
+      "id": "josien",
+      "group": "Zorgprofessionals",
+      "name": "Josien – fysiotherapeut",
+      "topics": 14,
+      "svg": "svg/josien.svg",
+      "png": "png/josien.png"
+    },
+    {
+      "id": "diederik",
+      "group": "Zorgprofessionals",
+      "name": "Diederik – geestelijk verzorger",
+      "topics": 13,
+      "svg": "svg/diederik.svg",
+      "png": "png/diederik.png"
+    },
+    {
+      "id": "martijn",
+      "group": "Zorgprofessionals",
+      "name": "Martijn – basisarts",
+      "topics": 13,
+      "svg": "svg/martijn.svg",
+      "png": "png/martijn.png"
+    }
+  ]
+}

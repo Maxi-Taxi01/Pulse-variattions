@@ -1,0 +1,1849 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alle interviews – interactieve systeemkaart</title>
+    <style>
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ink: #1a1a2e;
+  --muted: #555555;
+  --navy: #2b3990;
+  --aqua: #e31e24;
+  --surface: #ffffff;
+  --line: #a8b2bf;
+  --danger: #e31e24;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: #fafafa;
+  color: var(--ink);
+}
+
+body {
+  padding: 24px;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+.atlas {
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+.atlas-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.atlas-title h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 3rem);
+  letter-spacing: -0.045em;
+}
+
+.atlas-title p {
+  max-width: 850px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.atlas-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.atlas-controls select,
+.atlas-controls button {
+  min-height: 42px;
+  border: 1px solid #dfe1e9;
+  border-radius: 10px;
+  background: white;
+  color: var(--ink);
+}
+
+.atlas-controls select {
+  min-width: 320px;
+  padding: 0 12px;
+}
+
+.atlas-controls button {
+  padding: 0 16px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.map-workspace {
+  position: relative;
+}
+
+.map-stage {
+  overflow: auto;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 18px 55px rgba(43, 57, 144, 0.12);
+}
+
+.map-stage svg {
+  display: block;
+  width: 100%;
+  min-width: 1200px;
+  height: auto;
+}
+
+.map-node {
+  cursor: pointer;
+  outline: none;
+}
+
+.map-node .node-card {
+  transition: stroke 150ms ease, stroke-width 150ms ease, filter 150ms ease;
+}
+
+.map-node:hover .node-card,
+.map-node:focus .node-card,
+.map-node.selected .node-card {
+  stroke: #e31e24;
+  stroke-width: 3;
+  filter: drop-shadow(0 5px 8px rgba(227, 30, 36, 0.18));
+}
+
+.map-stage .map-node,
+.map-stage .map-connection {
+  transition: opacity 180ms ease, filter 180ms ease;
+}
+
+.map-stage.connection-focus .map-node,
+.map-stage.connection-focus .map-connection {
+  opacity: 0.1;
+}
+
+.map-stage.connection-focus .map-node.connection-active,
+.map-stage.connection-focus .map-node.selected,
+.map-stage.connection-focus .map-connection.connection-active {
+  opacity: 1;
+}
+
+.map-stage.connection-focus .map-connection.connection-active {
+  filter: drop-shadow(0 0 4px rgba(30, 52, 84, 0.3));
+}
+
+.map-stage.connection-focus .map-node.connection-active .node-card {
+  stroke: #e31e24;
+  stroke-width: 2.5;
+}
+
+.detail-panel {
+  position: absolute;
+  z-index: 5;
+  top: 18px;
+  right: 18px;
+  width: min(390px, calc(100% - 36px));
+  max-height: calc(100% - 36px);
+  overflow: auto;
+  padding: 26px;
+  border: 1px solid #d9dee8;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 22px 60px rgba(31, 43, 68, 0.24);
+}
+
+.detail-panel[hidden] {
+  display: none;
+}
+
+.detail-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: #eff1f5;
+  color: var(--ink);
+  font-size: 1.45rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.detail-kicker {
+  margin: 0 42px 6px 0;
+  color: #e31e24;
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.detail-panel h2 {
+  margin: 0;
+  font-size: 1.65rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.detail-meaning {
+  margin: 14px 0 18px;
+  color: #45536d;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.detail-context {
+  margin: 0 0 18px;
+  padding: 13px 14px;
+  border-left: 4px solid #2b3990;
+  border-radius: 9px;
+  background: #eef0f8;
+}
+
+.detail-context h3 {
+  margin: 0 0 7px;
+  color: #2b3990;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.detail-context p {
+  margin: 0;
+  color: #536079;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.detail-context .detail-context-person {
+  margin-bottom: 5px;
+  color: #303d59;
+  font-weight: 800;
+}
+
+.detail-facts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.detail-facts div {
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: #f3f5f8;
+}
+
+.detail-facts dt {
+  color: #778197;
+  font-size: 0.67rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.detail-facts dd {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 0.87rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.detail-relations {
+  margin-top: 18px;
+}
+
+.detail-relations h3 {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+}
+
+.detail-relations ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.detail-relations li {
+  padding: 9px 11px;
+  border-left: 4px solid #8dc63f;
+  border-radius: 7px;
+  background: #f6f8fa;
+  color: #4b5870;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.detail-relations li.negative {
+  border-left-color: #e31e24;
+}
+
+.detail-source {
+  margin: 18px 0 0;
+  color: #8992a3;
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+
+.map-index {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.map-index button {
+  border: 1px solid #dfe3ec;
+  border-radius: 12px;
+  padding: 13px 15px;
+  text-align: left;
+  background: white;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.map-index button.active {
+  border-color: var(--aqua);
+  box-shadow: inset 0 0 0 2px rgba(227, 30, 36, 0.16);
+}
+
+.map-index span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+body.export-mode {
+  padding: 0;
+  background: white;
+}
+
+body.export-mode .atlas-header,
+body.export-mode .map-index {
+  display: none;
+}
+
+body.export-mode .atlas {
+  width: 1800px;
+  max-width: none;
+  margin: 0;
+}
+
+body.export-mode .map-stage {
+  overflow: hidden;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.export-mode .detail-panel {
+  display: none;
+}
+
+body.export-mode .map-stage svg {
+  width: 1800px;
+  min-width: 1800px;
+  height: 1120px;
+}
+
+@media (max-width: 900px) {
+  body {
+    padding: 12px;
+  }
+
+  .atlas-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .atlas-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .atlas-controls select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .detail-panel {
+    position: fixed;
+    top: auto;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+    max-height: 72vh;
+  }
+}
+
+</style>
+  </head>
+  <body>
+    <main class="atlas">
+      <header class="atlas-header">
+        <div class="atlas-title">
+          <h1>Alle interviews – interactieve systeemkaart</h1>
+          <p>
+            Alle betekenisvolle onderwerpen uit de interviewanalyses, per bewoner en
+            zorgprofessional. De relaties zijn interpretaties van de gecodeerde onderwerpen:
+            ondersteunend, remmend of onderling versterkend.
+          </p>
+        </div>
+        <div class="atlas-controls">
+          <label>
+            <span class="sr-only">Kies een persoon</span>
+            <select id="mapSelect" aria-label="Kies een persoon"></select>
+          </label>
+          <button id="downloadSvg" type="button">Download SVG</button>
+        </div>
+      </header>
+      <section class="map-workspace">
+        <div class="map-stage" id="mapStage" aria-live="polite"></div>
+        <aside class="detail-panel" id="detailPanel" hidden aria-live="polite" aria-label="Onderwerpinformatie">
+          <button class="detail-close" id="detailClose" type="button" aria-label="Sluit onderwerpinformatie">×</button>
+          <p class="detail-kicker" id="detailTheme"></p>
+          <h2 id="detailTitle"></h2>
+          <p class="detail-meaning" id="detailMeaning"></p>
+          <section class="detail-context">
+            <h3>Interviewcontext</h3>
+            <p class="detail-context-person" id="detailContextPerson"></p>
+            <p id="detailContext"></p>
+          </section>
+          <dl class="detail-facts">
+            <div id="detailAnalyticalRow">
+              <dt>Analytische systeemterm</dt>
+              <dd id="detailAnalytical"></dd>
+            </div>
+            <div>
+              <dt>Invloed</dt>
+              <dd id="detailInfluence"></dd>
+            </div>
+            <div>
+              <dt>Centrale variabele</dt>
+              <dd id="detailCenter"></dd>
+            </div>
+          </dl>
+          <section class="detail-relations" id="detailRelationsSection">
+            <h3>Verbonden relaties</h3>
+            <ul id="detailRelations"></ul>
+          </section>
+          <p class="detail-source" id="detailSource"></p>
+        </aside>
+      </section>
+      <nav class="map-index" id="mapIndex" aria-label="Alle systeemkaarten"></nav>
+    </main>
+    <script>
+window.INDIVIDUAL_SYSTEM_MAPS = [
+  {
+    id: "alle-interviews",
+    group: "Gecombineerd",
+    name: "Alle interviews – geïntegreerde systeemkaart",
+    subtitle: "9 bewoners en 4 zorgprofessionals · 145 gecodeerde onderwerpen samengebracht",
+    interviewContext: "De kaart combineert negen bewonersperspectieven en vier professionele perspectieven uit woonzorgcentrum Rubroek. De gesprekken gaan over identiteit, dagelijks leven, relaties, verlies, autonomie, professionele ruimte, veiligheid en mogelijkheden voor betekenisvolle deelname.",
+    center: "Betekenisvol, autonoom en verbonden leven binnen veilige, mensgerichte zorg",
+    story: "Welbevinden groeit wanneer identiteit en competentie samengaan met vertrouwde relaties en passende deelname. Beperkingen vragen steun; systeemdruk bepaalt de beschikbare ruimte.",
+    leverage: "Borg maatwerk, professionele tijd, veiligheid en samenwerking.",
+    source: "Alle interviewanalyses in Bewoners en Zorg pro's",
+    coverage: {
+      interviews: 13,
+      residents: 9,
+      professionals: 4,
+      codedSubjects: 145
+    },
+    themes: [
+      {
+        title: "Persoonlijke betekenis & regie",
+        tone: "strength",
+        items: [
+          { code: "VAKIDENTITEIT", meaning: "Werk, vakkennis en levensrollen blijven bronnen van waardigheid" },
+          { code: "AUTONOMIE", meaning: "Zelf kiezen, grenzen stellen en niet onnodig geholpen worden" },
+          { code: "COMPETENTIE", meaning: "Maken, leren, regelen en kennis overdragen geven eigenwaarde" },
+          { code: "ZINGEVING", meaning: "Geloof, waarden, ethiek en levensverhalen dragen betekenis" },
+          { code: "DAGELIJKS_RITME", meaning: "Muziek, nieuws, sport, eten en handwerk structureren de dag" },
+          { code: "WENSEN", meaning: "Concrete verlangens openen energie: buiten, vissen, tuin, trein of uitje" }
+        ]
+      },
+      {
+        title: "Relaties, erkenning & deelname",
+        tone: "relation",
+        items: [
+          { code: "VERTROUWDE_RELATIES", meaning: "Een vaste vriend, begeleider of professional maakt contact veilig" },
+          { code: "GEHOORD_WORDEN", meaning: "Serieus luisteren voorkomt dat verdriet en signalen worden weggewuifd" },
+          { code: "WEDERKERIGHEID", meaning: "Bewoners willen bijdragen, jongeren ontmoeten en niet alleen ontvangen" },
+          { code: "FAMILIEVERBINDING", meaning: "Familie geeft warmte, maar afstand en weinig bezoek veroorzaken gemis" },
+          { code: "MAATWERK", meaning: "Aansluiten bij persoon, cultuur, identiteit en interesse maakt contact betekenisvol" },
+          { code: "DEELNAME_BUITEN", meaning: "Naar buiten en meedoen verbinden bewoners opnieuw met het gewone leven" }
+        ]
+      },
+      {
+        title: "Kwetsbaarheid & toegangsbarrières",
+        tone: "barrier",
+        items: [
+          { code: "LICHAMELIJK_VERLIES", meaning: "Verlamming, letsel en ouderdom beperken kunnen en bereik" },
+          { code: "MEDISCHE_REGELS", meaning: "Medicatie, indicaties en veiligheidsregels begrenzen vrijheid" },
+          { code: "COMMUNICATIE_COGNITIE", meaning: "Afasie, geheugenverlies en cognitieve verschillen vragen geduld" },
+          { code: "ROUW_EENZAAMHEID", meaning: "Verlies, familieafstand en weinig gelijkwaardig contact verkleinen de wereld" },
+          { code: "ANGST_TERUGTREKKING", meaning: "Angst, krenking en afweer verminderen vragen en deelnemen" },
+          { code: "AFHANKELIJKHEID", meaning: "Toegang tot identiteit, buitenwereld en activiteiten hangt vaak van anderen af" }
+        ]
+      },
+      {
+        title: "Professionele voorwaarden",
+        tone: "opportunity",
+        items: [
+          { code: "PROFESSIONELE_PASSIE", meaning: "Professionals leven op wanneer hun vak zichtbaar verschil maakt" },
+          { code: "ZORGDRUK", meaning: "Werkdruk, personeelstekort en versnippering breken aandacht", polarity: "negative" },
+          { code: "BEZUINIGING_BUREAUCRATIE", meaning: "Afbouw en systemen vernauwen tijd, toegang en professioneel oordeel", polarity: "negative" },
+          { code: "ERKENNING_ROL", meaning: "Vakpositie en heldere rollen maken eigenaarschap mogelijk" },
+          { code: "VEILIGHEID_VERANTWOORDELIJKHEID", meaning: "Duidelijke medische grenzen maken deelname verantwoord" },
+          { code: "SAMENWERKING_MIDDELEN", meaning: "Wijkpartners, vrijwilligers, klein budget en disciplines maken maatwerk haalbaar" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "VAKIDENTITEIT", to: "COMPETENTIE", polarity: "positive", label: "activeert" },
+      { from: "COMPETENTIE", to: "AUTONOMIE", polarity: "positive", label: "versterkt" },
+      { from: "AUTONOMIE", to: "DEELNAME_BUITEN", polarity: "positive", label: "stimuleert" },
+      { from: "VERTROUWDE_RELATIES", to: "GEHOORD_WORDEN", polarity: "positive", label: "maakt veilig" },
+      { from: "WEDERKERIGHEID", to: "VERTROUWDE_RELATIES", polarity: "positive", label: "verdiept" },
+      { from: "MAATWERK", to: "DEELNAME_BUITEN", polarity: "positive", label: "maakt mogelijk" },
+      { from: "LICHAMELIJK_VERLIES", to: "AFHANKELIJKHEID", polarity: "negative", label: "vergroot" },
+      { from: "MEDISCHE_REGELS", to: "DEELNAME_BUITEN", polarity: "negative", label: "begrenst" },
+      { from: "COMMUNICATIE_COGNITIE", to: "GEHOORD_WORDEN", polarity: "negative", label: "bemoeilijkt" },
+      { from: "PROFESSIONELE_PASSIE", to: "MAATWERK", polarity: "positive", label: "voedt" },
+      { from: "ZORGDRUK", to: "GEHOORD_WORDEN", polarity: "negative", label: "breekt aandacht" },
+      { from: "BEZUINIGING_BUREAUCRATIE", to: "ZORGDRUK", polarity: "negative", label: "vergroot" },
+      { from: "VEILIGHEID_VERANTWOORDELIJKHEID", to: "DEELNAME_BUITEN", polarity: "positive", label: "maakt verantwoord" },
+      { from: "SAMENWERKING_MIDDELEN", to: "MAATWERK", polarity: "positive", label: "maakt haalbaar" }
+    ]
+  },
+  {
+    id: "arie",
+    group: "Bewoners",
+    name: "Arie",
+    subtitle: "Bloemist, ondernemer en zelfstandig stadsmens",
+    interviewContext: "Man op hoge leeftijd, ruim twee jaar in het woonzorgcentrum. Hij werkte 45 jaar als bloemist in Rotterdam en bezat zeven winkels. Na een ongeluk met een hond raakte zijn been onherstelbaar beschadigd. Hij gaat nog dagelijks zelfstandig met de scootmobiel de stad in; zijn vrouw woont in Almere en zijn kinderen komen weinig.",
+    center: "Eigen regie, vakmanschap en actieve deelname",
+    story: "Arie leeft op wanneer hij kan handelen, vertellen en zelf op pad kan. Het ongeluk beperkte zijn bewegingsvrijheid, maar zijn identiteit blijft die van een regelaar en kenner.",
+    leverage: "Laat hem meedoen, uitleggen en liefst iets regelen.",
+    source: "Interviewanalyse_Arie_Bloemist.docx",
+    themes: [
+      {
+        title: "Vakidentiteit & regie",
+        tone: "strength",
+        items: [
+          { code: "BLOEMEN", meaning: "45 jaar vakkennis, handel en trots" },
+          { code: "HANDEL", meaning: "Ondernemerschap geeft vrijheid en regie" },
+          { code: "TEVREDENHEID", meaning: "Berusting én het gevoel alles te hebben gedaan" }
+        ]
+      },
+      {
+        title: "Relaties & generatie",
+        tone: "relation",
+        items: [
+          { code: "KINDEREN", meaning: "Trots, maar weinig bezoek en beschermende vlakheid", polarity: "negative" },
+          { code: "ECHTGENOTE", meaning: "Contact op afstand; gemis blijft onbesproken", polarity: "negative" },
+          { code: "JEUGD", meaning: "Meeleven met vaderloosheid; sterk arbeidsethos" }
+        ]
+      },
+      {
+        title: "Verlies & dagelijkse grenzen",
+        tone: "barrier",
+        items: [
+          { code: "ONGELUK", meaning: "Breuklijn: beschadigd been en opname" },
+          { code: "REIZEN", meaning: "Glansperiode die lichamelijk niet meer kan" },
+          { code: "ETEN", meaning: "Klein dagelijks ongenoegen dat hij zelf oplost" }
+        ]
+      },
+      {
+        title: "Wensen & deelname",
+        tone: "opportunity",
+        items: [
+          { code: "VEILING", meaning: "Trots én concrete wens om terug te gaan" },
+          { code: "BUITEN", meaning: "Dagelijks stadsleven houdt zijn identiteit levend" },
+          { code: "UITJE", meaning: "Eten, bingo en samen fantaseren activeren wensen" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "BLOEMEN", to: "VEILING", polarity: "positive", label: "activeert" },
+      { from: "ONGELUK", to: "REIZEN", polarity: "negative", label: "beperkt" },
+      { from: "BUITEN", to: "TEVREDENHEID", polarity: "positive", label: "behoudt regie" }
+    ]
+  },
+  {
+    id: "coby",
+    group: "Bewoners",
+    name: "Coby",
+    subtitle: "Bewoner met afasie, één functionele hand en liefde voor buiten",
+    interviewContext: "Coby woont al ongeveer 10–15 jaar in het woonzorgcentrum. Ze heeft ernstige woordvindproblemen en één functionele hand, waarmee ze nog breit. Buiten zijn, wandelen en boodschappen doen geven haar zichtbaar plezier. Voor grotere uitstappen heeft ze fysiek sterke, positieve en geduldige begeleiding nodig.",
+    center: "Eigenwaarde door buiten zijn en vertrouwd contact",
+    story: "Coby zoekt verbinding, maar alleen op een geduldige en positieve manier die haar competentie intact laat. Buiten zijn is de duidelijkste bron van welbevinden.",
+    leverage: "Een vaste, sterke en geduldige begeleider voor korte uitstappen.",
+    source: "Interviewanalyse_Coby_en_Cor.docx",
+    themes: [
+      {
+        title: "Competentie & eigen grens",
+        tone: "strength",
+        items: [
+          { code: "BREIEN", meaning: "Trots op wat met één hand nog kan; samen hoeft niet" }
+        ]
+      },
+      {
+        title: "Vertrouwd contact",
+        tone: "relation",
+        items: [
+          { code: "CAMILLE", meaning: "Sterk, positief en geduldig contact schept vertrouwen" }
+        ]
+      },
+      {
+        title: "Communicatiedrempel",
+        tone: "barrier",
+        items: [
+          { code: "AFASIE", meaning: "Woorden zoeken vraagt tijd en aandacht van de ander" }
+        ]
+      },
+      {
+        title: "Buitenwereld & wens",
+        tone: "opportunity",
+        items: [
+          { code: "BUITEN", meaning: "Wandelen en boodschappen zijn kern van welbevinden" },
+          { code: "DIERENTUIN", meaning: "Grootste concrete wens; fysieke begeleiding nodig" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "CAMILLE", to: "BUITEN", polarity: "positive", label: "maakt veilig" },
+      { from: "CAMILLE", to: "DIERENTUIN", polarity: "positive", label: "maakt mogelijk" },
+      { from: "AFASIE", to: "CAMILLE", polarity: "negative", label: "vraagt geduld" }
+    ]
+  },
+  {
+    id: "cor",
+    group: "Bewoners",
+    name: "Cor",
+    subtitle: "Zelfredzame modelbouwer met een duidelijke voorkeur voor alleen",
+    interviewContext: "Cor woont al ongeveer 10–15 jaar in het woonzorgcentrum en is geboren in Rotterdam. Hij doet vrijwel alles zelfstandig, bouwt modellen op zijn kamer en gaat alleen naar buiten. Hij wijst groepscontact en hulp meestal af; vissen is de enige concrete activiteit waarvoor hij samenwerking zou accepteren.",
+    center: "Autonomie zonder sociale druk",
+    story: "Cor wijst opgelegde verbinding af. Zijn welbevinden zit in zelfstandigheid en eigen bezigheden; vissen is de ene concrete opening voor samenwerking.",
+    leverage: "Respecteer het nee en sluit alleen aan bij een zelfgekozen doel.",
+    source: "Interviewanalyse_Coby_en_Cor.docx",
+    themes: [
+      {
+        title: "Autonomie & identiteit",
+        tone: "strength",
+        items: [
+          { code: "ALLEEN", meaning: "Zelfredzaamheid en liever zelfstandig handelen" },
+          { code: "MODELBOUW", meaning: "Eigen bezigheid en stille bron van trots" }
+        ]
+      },
+      {
+        title: "Sociale grenzen",
+        tone: "relation",
+        items: [
+          { code: "AFWEER", meaning: "Humor en terugkaatsen beschermen tegen gevoelsvragen", polarity: "negative" }
+        ]
+      },
+      {
+        title: "Veranderde omgeving",
+        tone: "barrier",
+        items: [
+          { code: "BUURT", meaning: "De vroegere buurt voelt veranderd en trekt niet meer" }
+        ]
+      },
+      {
+        title: "Voorwaardelijke opening",
+        tone: "opportunity",
+        items: [
+          { code: "VISSEN", meaning: "Enige doel waarvoor hij samenwerking accepteert" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "AFWEER", to: "ALLEEN", polarity: "positive", label: "beschermt" },
+      { from: "VISSEN", to: "ALLEEN", polarity: "negative", label: "opent tijdelijk" },
+      { from: "MODELBOUW", to: "ALLEEN", polarity: "positive", label: "ondersteunt" }
+    ]
+  },
+  {
+    id: "evelina",
+    group: "Bewoners",
+    name: "Evelina",
+    subtitle: "Weduwe, rolstoelgebruiker en maker met behoefte aan lichtheid",
+    interviewContext: "Evelina woont drie jaar in het woonzorgcentrum en gebruikt een rolstoel. Ze verzorgde jarenlang haar zieke man tot zijn overlijden. Ze heeft geen broers of zussen en ontvangt vooral bezoek van één goede vriendin. De dag vóór het interview liet ze haar eerste tatoeage zetten.",
+    center: "Gezien worden, lachen en even naar buiten",
+    story: "Evelina draagt zwaar verdriet én een krachtige behoefte aan lichtheid. Haar sociale wereld is klein; één vertrouwde relatie en korte persoonlijke momenten hebben daarom veel gewicht.",
+    leverage: "Eén-op-één wandelen, humor en serieus luisteren naar zorgsignalen.",
+    source: "Interviewanalyse_Evelina.docx",
+    themes: [
+      {
+        title: "Lichtheid & identiteit",
+        tone: "strength",
+        items: [
+          { code: "TATOEAGE", meaning: "Doorbraak, vreugde en trots op een nieuwe ervaring" },
+          { code: "LACHEN", meaning: "Samen lachen is een expliciete levensbehoefte" },
+          { code: "HANDWERK", meaning: "Herkenbare activiteit en blijvende competentie" },
+          { code: "KOKEN", meaning: "Herinnering, groepsdeelname en kunnen meehelpen" }
+        ]
+      },
+      {
+        title: "Dragende relaties & zingeving",
+        tone: "relation",
+        items: [
+          { code: "VRIENDIN", meaning: "Enige bezoek en belangrijkste sociale steun" },
+          { code: "GELOOF", meaning: "Bron van steun; dominee als gewenste vertrouwenspersoon" },
+          { code: "JEUGD", meaning: "Wederkerige kijk: jongeren mogen hulp vragen én helpen" }
+        ]
+      },
+      {
+        title: "Verdriet & niet gehoord",
+        tone: "barrier",
+        items: [
+          { code: "ROUW", meaning: "Overleden man en zware jaren van mantelzorg" },
+          { code: "GEHOORD", meaning: "Een beladen zorgsignaal wordt door anderen weggewuifd" },
+          { code: "MOPPEREN", meaning: "Negativiteit van medebewoners drukt de dag" }
+        ]
+      },
+      {
+        title: "Belangrijkste wens",
+        tone: "opportunity",
+        items: [
+          { code: "BUITEN", meaning: "Al is het maar een uur: wandelen en eruit zijn" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "VRIENDIN", to: "TATOEAGE", polarity: "positive", label: "maakt mogelijk" },
+      { from: "BUITEN", to: "LACHEN", polarity: "positive", label: "geeft lichtheid" },
+      { from: "GEHOORD", to: "ROUW", polarity: "negative", label: "laat vastzitten" }
+    ]
+  },
+  {
+    id: "nico",
+    group: "Bewoners",
+    name: "Nico",
+    subtitle: "Muziekliefhebber en voormalig medewerker sociale werkplaats",
+    interviewContext: "Nico is ongeveer 72 jaar, woont in het woonzorgcentrum en werkte vroeger administratief bij een sociale werkplaats. Hij is deels verlamd, gebruikt een rolstoel en heeft geheugenproblemen. Hij is ongetrouwd, heeft geen kinderen en verloor zijn ouders en zus; een broer woont in Portugal.",
+    center: "Veilige regie tussen verlies en plezier",
+    story: "Nico's wereld wordt kleiner door lichamelijk verlies, geheugenproblemen en angst. Muziek, bewegen en waardering voor jonge zorgverleners openen juist contact en eigenwaarde.",
+    leverage: "Vast, veilig contact via muziek, bewegen en iets mogen uitleggen.",
+    source: "Interviewanalyse_Laurens_Rubroek_1.docx",
+    themes: [
+      {
+        title: "Identiteit & plezier",
+        tone: "strength",
+        items: [
+          { code: "MUZIEK", meaning: "LP's en luisteren brengen directe levendigheid" },
+          { code: "MODELBOUW", meaning: "Trots op vroeger maken; verlies van fijne motoriek" },
+          { code: "BEWEGEN", meaning: "Fietsen en fysiotherapie geven plezier en trots" },
+          { code: "SCHOOL", meaning: "Warme herinnering die door vergeetachtigheid heen breekt" }
+        ]
+      },
+      {
+        title: "Relaties & waardering",
+        tone: "relation",
+        items: [
+          { code: "WAARDERING", meaning: "Sterke warmte voor jonge zorgverleners en stagiaires" },
+          { code: "FAMILIE", meaning: "Foto's verbinden met broer, nichtje en overleden zus" }
+        ]
+      },
+      {
+        title: "Verlies & kwetsbaarheid",
+        tone: "barrier",
+        items: [
+          { code: "VERLIES", meaning: "Ouders en zus overleden" },
+          { code: "VAL", meaning: "Traumatische breuklijn en redding door nichtje" },
+          { code: "LICHAAM", meaning: "Verlamming en verlies van fijne motoriek" },
+          { code: "GEHEUGEN", meaning: "Namen en details verdwijnen; terugtrekking volgt" },
+          { code: "EENZAAMHEID", meaning: "Alleen-zijn wordt verdedigend gerechtvaardigd" }
+        ]
+      },
+      {
+        title: "Regie & veilige deelname",
+        tone: "opportunity",
+        items: [
+          { code: "AUTONOMIE", meaning: "Zelf rijden en keuzes bewaken zijn waardigheid" },
+          { code: "ANGST", meaning: "Niet alleen naar buiten durven vraagt vaste steun", polarity: "negative" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "LICHAAM", to: "MODELBOUW", polarity: "negative", label: "neemt af" },
+      { from: "AUTONOMIE", to: "BEWEGEN", polarity: "positive", label: "versterkt" },
+      { from: "WAARDERING", to: "EENZAAMHEID", polarity: "negative", label: "doorbreekt" }
+    ]
+  },
+  {
+    id: "identiteit",
+    group: "Bewoners",
+    name: "Bewoner – genderidentiteit",
+    subtitle: "Privacygevoelig: identiteit die een leven lang vrijwel verborgen bleef",
+    interviewContext: "Deze bewoner vertelde vrijwel het hele leven alleen aan een broer en zus zich ook vrouw te voelen. Een bijeenkomst met een externe spreker maakte het voor het eerst mogelijk dit in het woonzorgcentrum uit te spreken. Een pruik, nagellak en hulp bij verzorging zijn kleine handelingen met grote betekenis voor de identiteit.",
+    center: "Veilig zichtbaar kunnen zijn als zichzelf",
+    story: "Een externe bijeenkomst maakte spreken mogelijk. Kleine verzorgingshandelingen dragen grote identiteit, maar zijn nu afhankelijk van toevallige welwillendheid.",
+    leverage: "Borg een vast, discreet verzorgingsmoment en herkenning van buitenaf.",
+    source: "Interviewanalyse_Laurens_Rubroek_2.docx",
+    privacy: "De naam is bewust niet opgenomen.",
+    themes: [
+      {
+        title: "Zichtbare identiteit",
+        tone: "strength",
+        items: [
+          { code: "IDENTITEIT", meaning: "Pruik en nagellak maken vrouw-zijn zichtbaar" },
+          { code: "VERZORGING", meaning: "Kleur en esthetiek geven rustige voldoening" }
+        ]
+      },
+      {
+        title: "Lang verborgen verhaal",
+        tone: "relation",
+        items: [
+          { code: "GEHEIM", meaning: "Levenslang zwijgen, behalve tegen broer en zus", polarity: "negative" }
+        ]
+      },
+      {
+        title: "Afhankelijkheid",
+        tone: "barrier",
+        items: [
+          { code: "AFHANKELIJKHEID", meaning: "Zelf verzorgen lukt niet; identiteit hangt van anderen af" }
+        ]
+      },
+      {
+        title: "Erkenning & kantelpunt",
+        tone: "opportunity",
+        items: [
+          { code: "ERKENNING", meaning: "Externe spreker maakte uitspreken en herkenning mogelijk" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "ERKENNING", to: "IDENTITEIT", polarity: "positive", label: "ontsluit" },
+      { from: "GEHEIM", to: "IDENTITEIT", polarity: "negative", label: "houdt verborgen" },
+      { from: "AFHANKELIJKHEID", to: "VERZORGING", polarity: "negative", label: "maakt kwetsbaar" }
+    ]
+  },
+  {
+    id: "onderwijzeres",
+    group: "Bewoners",
+    name: "Oud-onderwijzeres uit Suriname",
+    subtitle: "Geloof, familie, onderwijs en nuttig blijven",
+    interviewContext: "Surinaamse vrouw die zes à zeven jaar in het woonzorgcentrum woont. Ze werkte als onderwijzeres in Suriname, is lid van de Evangelische Broedergemeente en heeft vijf dochters en veel klein- en achterkleinkinderen. Ze haakt, knutselt en maakt kaarten voor haar familie.",
+    center: "Betekenis door geloof, familie en kennis overdragen",
+    story: "Haar bronnen van veerkracht zijn geloof, familie en bezig blijven. Het voelbare gemis zit in veranderde familiegewoonten; haar natuurlijke rol is die van leraar en overdrager.",
+    leverage: "Laat haar vrijwillig leren, vertellen en handwerk overdragen.",
+    source: "Interviewanalyse_Laurens_Rubroek_3.docx",
+    themes: [
+      {
+        title: "Bronnen van betekenis",
+        tone: "strength",
+        items: [
+          { code: "GELOOF", meaning: "Bidden geeft kracht en dankbaarheid" },
+          { code: "SURINAME", meaning: "Wortels, warmte en leven tussen twee landen" },
+          { code: "LIEFDE", meaning: "Levensles: liefde voor familie en voor jezelf" },
+          { code: "AANPASSING", meaning: "Mild accepteren dat niet alles perfect is" }
+        ]
+      },
+      {
+        title: "Familie & verlies",
+        tone: "relation",
+        items: [
+          { code: "FAMILIE", meaning: "Warmte en trots, maar bezoek is niet vanzelfsprekend" },
+          { code: "MAN", meaning: "Tedere herinnering aan samen koken en zijn overlijden", polarity: "negative" }
+        ]
+      },
+      {
+        title: "Generatieverandering",
+        tone: "barrier",
+        items: [
+          { code: "OPVOEDING", meaning: "Kleinkinderen worden niet meer vanzelf naar oma gestuurd" }
+        ]
+      },
+      {
+        title: "Bijdragen & bezig blijven",
+        tone: "opportunity",
+        items: [
+          { code: "ONDERWIJS", meaning: "Trots en identiteit als geboren onderwijzeres" },
+          { code: "HANDWERK", meaning: "Haken en kaarten verbinden haar met familie" },
+          { code: "BEZIGHEID", meaning: "Doen beschermt tegen somberheid en leeg geklets" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "GELOOF", to: "AANPASSING", polarity: "positive", label: "draagt" },
+      { from: "ONDERWIJS", to: "HANDWERK", polarity: "positive", label: "kan overdragen" },
+      { from: "OPVOEDING", to: "FAMILIE", polarity: "negative", label: "vergroot afstand" }
+    ]
+  },
+  {
+    id: "jan",
+    group: "Bewoners",
+    name: "Jan",
+    subtitle: "Oud-chemisch analist, maker en treinenliefhebber",
+    interviewContext: "Jan woont drie jaar in het woonzorgcentrum en is geboren in Rotterdam. Hij studeerde scheikunde en werkte als chemisch analist in het bedrijf van zijn vader. Hij heeft geen kinderen, nog één zus en een oude vriend die hem bezoekt. Hoewel hij mogelijk met een rollator naar buiten kan, doet hij dat niet meer.",
+    center: "Uitgenodigd worden om te maken en de wereld weer in te gaan",
+    story: "Jan heeft een rijke binnenwereld maar vraagt zelf nauwelijks iets. Een schoolkrenking lijkt zijn terughoudendheid te voeden; treinen en maken zijn de duidelijkste toegang tot energie.",
+    leverage: "Nodig hem actief uit voor treinervaringen en samen ontwerpen.",
+    source: "Interviewanalyse_Laurens_Rubroek_4.docx",
+    themes: [
+      {
+        title: "Vakmanschap & binnenwereld",
+        tone: "strength",
+        items: [
+          { code: "SCHEIKUNDE", meaning: "Beroepskennis blijft een sterke identiteit" },
+          { code: "FANTASIE", meaning: "Rijke binnenwereld met boten, walvissen en dromen" },
+          { code: "MAKEN", meaning: "Ontwerpen en bouwen zijn gemiste én levende waarden" },
+          { code: "NIEUWS", meaning: "Krant en journaal vormen een dagelijks anker" },
+          { code: "MILDHEID", meaning: "Oordeelloosheid; boosheid vooral op verwijt" }
+        ]
+      },
+      {
+        title: "Dierbare verbinding",
+        tone: "relation",
+        items: [
+          { code: "VRIEND", meaning: "Langdurige vriendschap en bezoek geven warmte" }
+        ]
+      },
+      {
+        title: "Krenking & terugtrekking",
+        tone: "barrier",
+        items: [
+          { code: "KRENKING", meaning: "Publiek afgemaakt; daarna nooit meer vragen gesteld" },
+          { code: "OORLOG", meaning: "Beladen jeugdherinnering die niet wordt geopend" },
+          { code: "VERLIES", meaning: "Zussen verloren; verdriet flitst weg in zelfcorrectie" },
+          { code: "BINNEN", meaning: "Komt niet buiten hoewel het lichamelijk mogelijk lijkt" }
+        ]
+      },
+      {
+        title: "Wens & generatiekracht",
+        tone: "opportunity",
+        items: [
+          { code: "TREINEN", meaning: "Jeugddroom en concrete wens om tram of trein te sturen" },
+          { code: "GEMAK", meaning: "Bewondering voor mentale lichtheid van jongeren" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "KRENKING", to: "BINNEN", polarity: "negative", label: "voedt terugtrekking" },
+      { from: "MAKEN", to: "FANTASIE", polarity: "positive", label: "geeft vorm" },
+      { from: "TREINEN", to: "GEMAK", polarity: "positive", label: "kan verbinden" }
+    ]
+  },
+  {
+    id: "zelfredzame-man",
+    group: "Bewoners",
+    name: "Zelfredzame bewoner",
+    subtitle: "Oud-bedrijfsleider en scheepsbouwer, opgenomen vanwege medicatietoezicht",
+    interviewContext: "Man eind zeventig, cognitief scherp en fysiek zelfstandig. Hij woont uitsluitend in het woonzorgcentrum omdat zijn epilepsiemedicatie onder toezicht moet worden ingenomen. Zijn jongere vrouw woont thuis en hij gaat in het weekend naar haar toe. Hij werkte als bedrijfsleider, in de scheepsbouw en als organisatieadviseur.",
+    center: "Competent blijven binnen regels die zijn vrijheid beperken",
+    story: "Zijn identiteit is gebouwd op kennis, zelfstandigheid en verantwoordelijkheid. Medicatieregels en indicaties maken hem afhankelijk, terwijl relationele aansluiting in huis beperkt is.",
+    leverage: "Organiseer vissen of moestuinwerk rond veilige medicatieafspraken.",
+    source: "Interviewanalyse_Laurens_Rubroek_5.docx",
+    themes: [
+      {
+        title: "Vakmanschap & principes",
+        tone: "strength",
+        items: [
+          { code: "SCHEEPSBOUW", meaning: "Sterkste bron van trots, detail en vakidentiteit" },
+          { code: "ZELFSTANDIGHEID", meaning: "Alles zelf kunnen is de kern van zijn zelfbeeld" },
+          { code: "OPVOEDING", meaning: "Grenzen, consequenties en leren luisteren" },
+          { code: "RESPECT", meaning: "Formele omgangsvormen bewaken waardigheid" },
+          { code: "GELOOF", meaning: "Afgesloten religieus hoofdstuk na familieconflict" }
+        ]
+      },
+      {
+        title: "Relaties & aansluiting",
+        tone: "relation",
+        items: [
+          { code: "ECHTGENOTE", meaning: "Liefde op afstand; alleen weekenden samen" },
+          { code: "MEDEBEWONERS", meaning: "Cognitieve kloof beperkt gelijkwaardig gesprek", polarity: "negative" },
+          { code: "VERLIES", meaning: "Kinderen verbraken contact; kleinkinderen nooit ontmoet", polarity: "negative" },
+          { code: "GEVOELENS", meaning: "Direct gevoelsgesprek roept ongemak en vermijding op", polarity: "negative" }
+        ]
+      },
+      {
+        title: "Systeemgrenzen",
+        tone: "barrier",
+        items: [
+          { code: "MEDICATIE", meaning: "Streng schema bepaalt wonen en elk toekomstplan" },
+          { code: "EPILEPSIE", meaning: "Aanval op 65-jarige leeftijd is de grote breuklijn" },
+          { code: "INDICATIE", meaning: "Bureaucratische categorieën bepalen woonmogelijkheden" },
+          { code: "REIZEN", meaning: "Spanje en vrijheid botsen op medicatieregels" }
+        ]
+      },
+      {
+        title: "Wensen & dagelijkse bronnen",
+        tone: "opportunity",
+        items: [
+          { code: "VISSEN", meaning: "Duidelijkste concrete wens en kennisgebied" },
+          { code: "MOESTUIN", meaning: "Regelen, onderhouden en vakkennis inzetten" },
+          { code: "SPORT", meaning: "Voetbal geeft enthousiasme en gesprek" },
+          { code: "NIEUWS", meaning: "Krant en wereldnieuws bieden ritme en niveau" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "EPILEPSIE", to: "MEDICATIE", polarity: "negative", label: "veroorzaakt regime" },
+      { from: "MEDICATIE", to: "REIZEN", polarity: "negative", label: "blokkeert" },
+      { from: "SCHEEPSBOUW", to: "ZELFSTANDIGHEID", polarity: "positive", label: "vormt identiteit" },
+      { from: "MOESTUIN", to: "ZELFSTANDIGHEID", polarity: "positive", label: "activeert" }
+    ]
+  },
+  {
+    id: "dick",
+    group: "Zorgprofessionals",
+    name: "Dick – muziektherapeut",
+    subtitle: "Relationele muziekpraktijk onder druk van versnippering",
+    interviewContext: "Muziektherapeut binnen de ouderenzorg. Zijn interview van ongeveer 82 minuten gaat over de kracht van muziek voor herkenning, culturele groepen en rouw, maar ook over werken op zeven locaties, personeelstekort, triage, bureaucratie en het verlies van vaste aandacht voor bewoners.",
+    center: "Muzikale aandacht kunnen bieden waar die betekenis heeft",
+    story: "Dick ziet muziek als relationeel goud, maar versnippering en triage trekken hem richting incidentbestrijding. Zijn morele pijn ontstaat waar aandacht en groepscultuur breken.",
+    leverage: "Bescherm vaste groepen, professionele afweging en tijd voor aandacht.",
+    source: "Interview_analyse_emotionele_onderwerpen.docx",
+    themes: [
+      {
+        title: "Vakpassie & betekenis",
+        tone: "strength",
+        items: [
+          { code: "PASSIE", meaning: "Muziek kan herkenning, contact en leven terugbrengen" },
+          { code: "IDENTITEIT", meaning: "Culturele muziekgroepen vragen bescherming en continuïteit" },
+          { code: "ROUW", meaning: "De groep moet verlies en een lege stoel kunnen dragen" },
+          { code: "KWETSBAARHEID", meaning: "Bewonersverhalen maken de menselijke inzet voelbaar" }
+        ]
+      },
+      {
+        title: "Steun & vertrouwen",
+        tone: "relation",
+        items: [
+          { code: "VERTROUWEN", meaning: "Een steunende teamleider herstelt rust en draagkracht" }
+        ]
+      },
+      {
+        title: "Organisatieverlies",
+        tone: "barrier",
+        items: [
+          { code: "VERSNIPPERING", meaning: "Van één vaste plek naar zeven locaties op afroep" },
+          { code: "BEZUINIGING", meaning: "Eerdere en nieuwe afbouw roepen verlieservaring op" },
+          { code: "VISIELOOSHEID", meaning: "Middelen zonder visie leiden tot verspilling" },
+          { code: "PERSONEELSTEKORT", meaning: "Vertrek van personeel breekt alledaagse aandacht" },
+          { code: "CHAOS", meaning: "Verhuizing en onaf werk ondermijnen eigenaarschap" }
+        ]
+      },
+      {
+        title: "Morele & uitvoeringsdruk",
+        tone: "barrier",
+        items: [
+          { code: "WERKDRUK", meaning: "Reizen en gebrek aan voorbereiding worden overweldigend" },
+          { code: "TRIAGE", meaning: "Zelf bepalen wie geen therapie krijgt geeft morele nood" },
+          { code: "ANGST", meaning: "Vrees voor vernauwing tot alleen roepgedrag" },
+          { code: "BUREAUCRATIE", meaning: "Excel-verwijzing vervangt professioneel overzicht" },
+          { code: "MISSTANDEN", meaning: "Vrijheidsbeperking van bewoners doet pijn in het vak" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "BEZUINIGING", to: "VERSNIPPERING", polarity: "negative", label: "versterkt" },
+      { from: "VERSNIPPERING", to: "WERKDRUK", polarity: "negative", label: "vergroot" },
+      { from: "BUREAUCRATIE", to: "TRIAGE", polarity: "negative", label: "dwingt" },
+      { from: "VERTROUWEN", to: "WERKDRUK", polarity: "positive", label: "dempt" }
+    ]
+  },
+  {
+    id: "josien",
+    group: "Zorgprofessionals",
+    name: "Josien – fysiotherapeut",
+    subtitle: "25 jaar ouderenzorg tussen vakidentiteit en uitfasering",
+    interviewContext: "Fysiotherapeut van 65 jaar met ongeveer 25 jaar ervaring in de ouderenzorg. Ze spreekt vanuit een doorleefde visie op functioneren en relationele zorg. Verwijssystemen, uitsluiting van overleg en onduidelijke taakverdeling geven haar het gevoel dat haar vak wordt uitgefaseerd en dragen bij aan eerder stoppen.",
+    center: "Als mens én behandelaar van betekenis blijven",
+    story: "Josien verdedigt relationele, functionele zorg tegen een systeem dat haar vak en positie smaller maakt. Burgerlijke ongehoorzaamheid houdt menselijkheid tijdelijk open.",
+    leverage: "Geef behandelaren positie, klein budget en ruimte om relationeel te handelen.",
+    source: "Interview_analyse_emotionele_onderwerpen.docx",
+    themes: [
+      {
+        title: "Vakvisie & betekenis",
+        tone: "strength",
+        items: [
+          { code: "BEHOUD", meaning: "Behouden van functioneren is niet hetzelfde als therapie" },
+          { code: "IDENTITEIT", meaning: "Spanning tussen aanwezig zijn als mens en als fysiotherapeut" },
+          { code: "VRIENDSCHAP", meaning: "Een mooie laatste fase draait om relaties tussen bewoners" }
+        ]
+      },
+      {
+        title: "Erkenning & loopbaan",
+        tone: "relation",
+        items: [
+          { code: "ERKENNING", meaning: "Uitsluiting van regieoverleg tast behandelaarschap aan", polarity: "negative" },
+          { code: "JONGEREN", meaning: "Nieuwe collega's verliezen volgens haar professionele tools", polarity: "negative" },
+          { code: "PENSIOEN", meaning: "Systeemfrustratie versnelt haar besluit om te stoppen", polarity: "negative" },
+          { code: "TOEKOMST", meaning: "Eigen ouderdom maakt het tekort persoonlijk" }
+        ]
+      },
+      {
+        title: "Systeemdruk",
+        tone: "barrier",
+        items: [
+          { code: "UITFASERING", meaning: "Het vak voelt stap voor stap uit het systeem gezet" },
+          { code: "BEZUINIGING", meaning: "Verwijssysteem wordt ervaren als verkapte besparing" },
+          { code: "OVERBEHANDELING", meaning: "Boosheid over consumentisme in de eerste lijn" },
+          { code: "SPAGAAT", meaning: "Eerst collega's wegzetten, nu met hen concurreren" }
+        ]
+      },
+      {
+        title: "Handelingsruimte",
+        tone: "opportunity",
+        items: [
+          { code: "ONGEHOORZAAMHEID", meaning: "Toch aanschuiven en cappuccino's halen bewaart menselijkheid" },
+          { code: "BUDGET", meaning: "Geen kleine portemonnee maakt gewone uitjes persoonlijk betaald" },
+          { code: "AFDELING", meaning: "Onduidelijke rolverdeling veroorzaakt strijd met het zorgteam", polarity: "negative" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "BEZUINIGING", to: "UITFASERING", polarity: "negative", label: "versnelt" },
+      { from: "ERKENNING", to: "IDENTITEIT", polarity: "negative", label: "raakt" },
+      { from: "ONGEHOORZAAMHEID", to: "VRIENDSCHAP", polarity: "positive", label: "schept ruimte" },
+      { from: "JONGEREN", to: "PENSIOEN", polarity: "negative", label: "maakt verdrietig" }
+    ]
+  },
+  {
+    id: "diederik",
+    group: "Zorgprofessionals",
+    name: "Diederik – geestelijk verzorger",
+    subtitle: "Vrijplaats, zingeving en maatwerk voor iedereen",
+    interviewContext: "Geestelijk verzorger met een eerdere loopbaan in de architectuur. Hij ziet zijn werk als een vrijplaats voor zingeving, ethiek en levenseinde, niet alleen voor religieuze bewoners. Het interview gaat ook over beeldvorming als ‘de dominee’, minder uren, wijkverbinding, stilteruimtes en interdisciplinair maatwerk.",
+    center: "Ongehinderde ruimte voor betekenis, ethiek en ritueel",
+    story: "Diederik ziet geestelijke zorg als brede vrijplaats, niet als religieuze niche. Beeldvorming en urenverlies verkleinen toegang, terwijl maatwerk en wijkverbinding laten zien wat mogelijk is.",
+    leverage: "Maak toegang vanzelfsprekend en verbind zingeving met wijk en disciplines.",
+    source: "Interview_analyse_emotionele_onderwerpen.docx",
+    themes: [
+      {
+        title: "Vakidentiteit & zingeving",
+        tone: "strength",
+        items: [
+          { code: "LOOPBAAN", meaning: "Architectuur en theologie vormen één ontwerpende loopbaan" },
+          { code: "ZINGEVING", meaning: "Betekenisvol leven reikt verder dan diagnose of religie" },
+          { code: "ETHIEK", meaning: "Moreel beraad opent gezamenlijke afweging" },
+          { code: "LEVENSEINDE", meaning: "Rituelen op maat ondersteunen bewoner en familie" }
+        ]
+      },
+      {
+        title: "Vrijplaats & beeldvorming",
+        tone: "relation",
+        items: [
+          { code: "VRIJPLAATS", meaning: "Bewoners moeten zonder drempel toegang houden" },
+          { code: "BEELDVORMING", meaning: "Het label 'dominee' sluit niet-religieuze bewoners uit", polarity: "negative" },
+          { code: "NAAMGEVING", meaning: "De functienaam roept weerstand en verwarring op", polarity: "negative" }
+        ]
+      },
+      {
+        title: "Systeemdruk",
+        tone: "barrier",
+        items: [
+          { code: "BEZUINIGING", meaning: "25% minder uren laat huiskamergesprekken verdwijnen" }
+        ]
+      },
+      {
+        title: "Mogelijkheden & verbinding",
+        tone: "opportunity",
+        items: [
+          { code: "WIJKVERBINDING", meaning: "Kerk en vrijwilligers kunnen continuïteit dragen" },
+          { code: "TROTS", meaning: "Een eigen strategiebeeld maakt het vak zichtbaar" },
+          { code: "MAATWERK", meaning: "Metal draaien toont radicale aansluiting bij één persoon" },
+          { code: "STILTERUIMTE", meaning: "Ontwerpen van plek verbindt bouwkundige en spirituele kennis" },
+          { code: "SAMENWERKING", meaning: "Kok, therapeuten, activiteiten en jongeren versterken elkaar" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "BEELDVORMING", to: "VRIJPLAATS", polarity: "negative", label: "vernauwt toegang" },
+      { from: "BEZUINIGING", to: "SAMENWERKING", polarity: "negative", label: "neemt tijd" },
+      { from: "MAATWERK", to: "ZINGEVING", polarity: "positive", label: "maakt concreet" },
+      { from: "WIJKVERBINDING", to: "SAMENWERKING", polarity: "positive", label: "verankert" }
+    ]
+  },
+  {
+    id: "martijn",
+    group: "Zorgprofessionals",
+    name: "Martijn – basisarts",
+    subtitle: "Jonge arts tussen samen beslissen, veiligheid en betrokkenheid",
+    interviewContext: "Basisarts aan het begin van zijn loopbaan, met de ambitie huisarts te worden. Hij hecht aan samen beslissen en langdurige betrokkenheid, maar bewaakt medische grenzen. In het interview onderzoekt hij vooral verantwoordelijkheid en signalering wanneer bewoners met vrijwilligers aan activiteiten buiten het huis deelnemen.",
+    center: "Medisch verantwoord én menselijk betrokken handelen",
+    story: "Martijn zoekt langdurige betrokkenheid en samen beslissen, maar ziet scherpe grenzen rond medische verantwoordelijkheid. Zijn energie zit dichtbij bewoners, activiteiten en gedeelde interesses.",
+    leverage: "Maak verantwoordelijkheden rond vrijwilligers helder en houd artsen dichtbij het dagelijks leven.",
+    source: "Interview_analyse_emotionele_onderwerpen.docx",
+    themes: [
+      {
+        title: "Vakontwikkeling",
+        tone: "strength",
+        items: [
+          { code: "LOOPBAAN", meaning: "Huisartsgeneeskunde trekt door variatie en langdurige band" },
+          { code: "SAMENBESLISSEN", meaning: "Cliënt en familie meenemen is een kernwaarde" },
+          { code: "BETROKKENHEID", meaning: "Meekijken in activiteiten en huiskamers geeft energie" },
+          { code: "POSITIE", meaning: "Als jonge 'guppy' houdt hij beleid nog op afstand" }
+        ]
+      },
+      {
+        title: "Menselijke betekenis",
+        tone: "relation",
+        items: [
+          { code: "EENZAAMHEID", meaning: "Hij gunt bewoners nabijheid en minder isolement" },
+          { code: "GROOTOUDERS", meaning: "Vitale grootouders maken ouder worden persoonlijk" },
+          { code: "VOETBAL", meaning: "Gedeelde passie opent contact, ook bij dementie" },
+          { code: "GELUK", meaning: "Gelukkig zijn relativeert status en carrière" }
+        ]
+      },
+      {
+        title: "Medische grenzen",
+        tone: "barrier",
+        items: [
+          { code: "CONFLICT", meaning: "Samen beslissen stopt waar behandeling onverantwoord wordt" },
+          { code: "VERANTWOORDELIJKHEID", meaning: "Uitjes roepen de vraag op wie medisch verantwoordelijk is" },
+          { code: "SIGNALERING", meaning: "Vrijwilligers mogen medische risico's niet ongemerkt dragen" }
+        ]
+      },
+      {
+        title: "Systeemverwachtingen",
+        tone: "barrier",
+        items: [
+          { code: "REGISTRATIELAST", meaning: "Administratiedruk bedreigt toekomstige huisartspraktijk" },
+          { code: "VERWACHTINGEN", meaning: "Familie verwacht soms meer zorg dan het huis biedt" }
+        ]
+      }
+    ],
+    crossLinks: [
+      { from: "SAMENBESLISSEN", to: "CONFLICT", polarity: "negative", label: "kent grens" },
+      { from: "VERANTWOORDELIJKHEID", to: "SIGNALERING", polarity: "negative", label: "vereist afbakening" },
+      { from: "VOETBAL", to: "BETROKKENHEID", polarity: "positive", label: "opent contact" },
+      { from: "EENZAAMHEID", to: "BETROKKENHEID", polarity: "positive", label: "motiveert" }
+    ]
+  }
+];
+
+{
+  const combinedMap = window.INDIVIDUAL_SYSTEM_MAPS.find((map) => map.id === "alle-interviews");
+  const literalInterviewLanguage = {
+    VAKIDENTITEIT: { displayLabel: "Bloemen", speaker: "Arie" },
+    AUTONOMIE: { displayLabel: "Ik kan het zelf", speaker: "Nico" },
+    COMPETENTIE: { displayLabel: "Zelf dingen maken", speaker: "Jan" },
+    ZINGEVING: { displayLabel: "We blijven bidden", speaker: "Oud-onderwijzeres uit Suriname" },
+    DAGELIJKS_RITME: { displayLabel: "Alles met muziek", speaker: "Nico" },
+    WENSEN: { displayLabel: "Gewoon even eruit", speaker: "Evelina" },
+    VERTROUWDE_RELATIES: { displayLabel: "Sterk, positief, geduldig", speaker: "Coby" },
+    GEHOORD_WORDEN: { displayLabel: "Dan moeten ze wel luisteren", speaker: "Evelina" },
+    WEDERKERIGHEID: { displayLabel: "Help me", speaker: "Evelina" },
+    FAMILIEVERBINDING: { displayLabel: "Wel leuk als ze even komen", speaker: "Oud-onderwijzeres uit Suriname" },
+    MAATWERK: { displayLabel: "Die persoon springt eruit", speaker: "Diederik" },
+    DEELNAME_BUITEN: { displayLabel: "Wandelen", speaker: "Evelina" },
+    LICHAMELIJK_VERLIES: { displayLabel: "Ik kan er niet meer", speaker: "Nico" },
+    MEDISCHE_REGELS: { displayLabel: "Je krijgt niet voor 14 dagen mee", speaker: "Zelfredzame bewoner" },
+    COMMUNICATIE_COGNITIE: { displayLabel: "Ik weet het niet meer", speaker: "Nico" },
+    ROUW_EENZAAMHEID: { displayLabel: "We missen die stoel", speaker: "Dick – muziektherapeut" },
+    ANGST_TERUGTREKKING: { displayLabel: "Ik durf niet meer alleen naar buiten", speaker: "Nico" },
+    AFHANKELIJKHEID: { displayLabel: "Ik kan het niet zelf doen", speaker: "Bewoner – genderidentiteit" },
+    PROFESSIONELE_PASSIE: { displayLabel: "Je hebt goud in handen", speaker: "Dick – muziektherapeut" },
+    ZORGDRUK: { displayLabel: "Waar ben ik dan nog?", speaker: "Dick – muziektherapeut" },
+    BEZUINIGING_BUREAUCRATIE: { displayLabel: "Verkapte bezuiniging", speaker: "Josien – fysiotherapeut" },
+    ERKENNING_ROL: { displayLabel: "Heet ik dan nog wel behandelaar?", speaker: "Josien – fysiotherapeut" },
+    VEILIGHEID_VERANTWOORDELIJKHEID: { displayLabel: "Waar ligt de verantwoordelijkheid?", speaker: "Martijn – basisarts" },
+    SAMENWERKING_MIDDELEN: { displayLabel: "Dat vond ik een fantastisch idee", speaker: "Diederik – geestelijk verzorger" }
+  };
+
+  const literalMap = JSON.parse(JSON.stringify(combinedMap));
+  literalMap.id = "alle-interviews-letterlijk";
+  literalMap.name = "Alle interviews – letterlijke interviewtaal";
+  literalMap.subtitle = "Dezelfde 24 systeemelementen, gelabeld met woorden en korte zinnen uit de interviews";
+  literalMap.interviewContext = "Deze variant gebruikt per geconsolideerd systeemelement één representatieve, letterlijke formulering uit de interviewanalyses. De formulering is geen samenvatting van alle geïnterviewden, maar een menselijk herkenbaar anker voor de bredere analytische systeemterm.";
+  literalMap.source = "Letterlijke kernfragmenten uit alle interviewanalyses";
+  literalMap.themes.forEach((theme) => {
+    theme.items.forEach((item) => {
+      const literal = literalInterviewLanguage[item.code];
+      item.analyticalTerm = item.code.replaceAll("_", " ");
+      item.displayLabel = literal.displayLabel;
+      item.literalSpeaker = literal.speaker;
+      item.meaning = `${item.meaning}. Letterlijke formulering: “${literal.displayLabel}” — ${literal.speaker}.`;
+    });
+  });
+  window.INDIVIDUAL_SYSTEM_MAPS.splice(1, 0, literalMap);
+}
+
+</script>
+    <script>
+(function () {
+  const maps = window.INDIVIDUAL_SYSTEM_MAPS || [];
+  const stage = document.querySelector("#mapStage");
+  const select = document.querySelector("#mapSelect");
+  const index = document.querySelector("#mapIndex");
+  const downloadButton = document.querySelector("#downloadSvg");
+  const detailPanel = document.querySelector("#detailPanel");
+  const detailClose = document.querySelector("#detailClose");
+  const detailTheme = document.querySelector("#detailTheme");
+  const detailTitle = document.querySelector("#detailTitle");
+  const detailMeaning = document.querySelector("#detailMeaning");
+  const detailContextPerson = document.querySelector("#detailContextPerson");
+  const detailContext = document.querySelector("#detailContext");
+  const detailAnalyticalRow = document.querySelector("#detailAnalyticalRow");
+  const detailAnalytical = document.querySelector("#detailAnalytical");
+  const detailInfluence = document.querySelector("#detailInfluence");
+  const detailCenter = document.querySelector("#detailCenter");
+  const detailRelations = document.querySelector("#detailRelations");
+  const detailRelationsSection = document.querySelector("#detailRelationsSection");
+  const detailSource = document.querySelector("#detailSource");
+  const params = new URLSearchParams(window.location.search);
+  const exportMode = params.get("export") === "1";
+  const requestedMap = params.get("map");
+  const NS = "http://www.w3.org/2000/svg";
+
+  if (exportMode) document.body.classList.add("export-mode");
+
+  const tones = {
+    strength: { fill: "#eef6e4", accent: "#78a934", line: "#8fa76e" },
+    relation: { fill: "#eef0f8", accent: "#2b3990", line: "#8d95bb" },
+    barrier: { fill: "#fae8e8", accent: "#e31e24", line: "#e31e24" },
+    opportunity: { fill: "#f9efd3", accent: "#e69b20", line: "#a99366" }
+  };
+
+  const regions = [
+    { x: 48, y: 128, w: 704, h: 388 },
+    { x: 1048, y: 128, w: 704, h: 388 },
+    { x: 48, y: 586, w: 704, h: 388 },
+    { x: 1048, y: 586, w: 704, h: 388 }
+  ];
+
+  let current = maps.find((map) => map.id === requestedMap) || maps[0];
+  let currentNodeLookup = new Map();
+
+  function escapeXml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&apos;");
+  }
+
+  function wrapText(text, maxChars, maxLines) {
+    const words = String(text).split(/\s+/);
+    const lines = [];
+    let line = "";
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (candidate.length <= maxChars || !line) {
+        line = candidate;
+      } else {
+        lines.push(line);
+        line = word;
+      }
+    }
+    if (line) lines.push(line);
+    if (lines.length > maxLines) {
+      const kept = lines.slice(0, maxLines);
+      kept[maxLines - 1] = `${kept[maxLines - 1].replace(/[.,;:]?$/, "")}…`;
+      return kept;
+    }
+    return lines;
+  }
+
+  function textLines(lines, x, y, options = {}) {
+    const {
+      size = 14,
+      weight = 500,
+      fill = "#1a1a2e",
+      lineHeight = size * 1.25,
+      anchor = "start",
+      family = "Inter, Segoe UI, sans-serif",
+      italic = false
+    } = options;
+    return `<text x="${x}" y="${y}" text-anchor="${anchor}" fill="${fill}" font-family="${family}" font-size="${size}" font-weight="${weight}"${italic ? ' font-style="italic"' : ""}>${lines
+      .map(
+        (line, index) =>
+          `<tspan x="${x}" dy="${index === 0 ? 0 : lineHeight}">${escapeXml(line)}</tspan>`
+      )
+      .join("")}</text>`;
+  }
+
+  function itemPolarity(theme, item) {
+    if (item.polarity) return item.polarity;
+    return theme.tone === "barrier" ? "negative" : "positive";
+  }
+
+  function itemLayout(theme, region) {
+    const count = theme.items.length;
+    const columns = count > 3 ? 2 : count === 3 ? 2 : 1;
+    const rows = Math.ceil(count / columns);
+    const nodeW = columns === 1 ? 340 : 286;
+    const nodeH = 62;
+    const gapX = columns === 1 ? 0 : 42;
+    const totalW = columns * nodeW + (columns - 1) * gapX;
+    const startX = region.x + (region.w - totalW) / 2;
+    const usableTop = region.y + 76;
+    const usableHeight = region.h - 102;
+    const gapY = rows === 1 ? 0 : Math.max(12, (usableHeight - rows * nodeH) / (rows - 1));
+    return theme.items.map((item, index) => {
+      const column = index % columns;
+      const row = Math.floor(index / columns);
+      return {
+        ...item,
+        x: startX + column * (nodeW + gapX),
+        y: usableTop + row * (nodeH + gapY),
+        w: nodeW,
+        h: nodeH
+      };
+    });
+  }
+
+  function lineToCenter(node, center, polarity, accent, index) {
+    const sx = node.x + node.w / 2;
+    const sy = node.y + node.h / 2;
+    const tx = center.x + center.w / 2;
+    const ty = center.y + center.h / 2;
+    const bend = index % 2 === 0 ? 38 : -38;
+    const mx = (sx + tx) / 2 + (sy < ty ? bend : -bend);
+    const my = (sy + ty) / 2 + (sx < tx ? -bend : bend);
+    const negative = polarity === "negative";
+    return `<path class="map-connection center-connection" data-source="${escapeXml(
+      node.code
+    )}" data-target="CENTRALE_VARIABELE" d="M ${sx} ${sy} Q ${mx} ${my} ${tx} ${ty}" fill="none" stroke="${
+      negative ? "#e31e24" : accent
+    }" stroke-width="${negative ? 2.5 : 2.2}" stroke-opacity="${negative ? 0.72 : 0.48}" ${
+      negative ? 'stroke-dasharray="8 7"' : ""
+    } marker-end="url(#arrow-${negative ? "negative" : "positive"})"/>`;
+  }
+
+  function crossLink(link, lookup) {
+    const source = lookup.get(link.from);
+    const target = lookup.get(link.to);
+    if (!source || !target) return "";
+    const sx = source.x + source.w / 2;
+    const sy = source.y + source.h / 2;
+    const tx = target.x + target.w / 2;
+    const ty = target.y + target.h / 2;
+    const dx = tx - sx;
+    const dy = ty - sy;
+    const distance = Math.max(Math.hypot(dx, dy), 1);
+    const nx = -dy / distance;
+    const ny = dx / distance;
+    const bend = Math.min(95, Math.max(42, distance * 0.16));
+    const cx = (sx + tx) / 2 + nx * bend;
+    const cy = (sy + ty) / 2 + ny * bend;
+    const lx = 0.25 * sx + 0.5 * cx + 0.25 * tx;
+    const ly = 0.25 * sy + 0.5 * cy + 0.25 * ty;
+    const negative = link.polarity === "negative";
+    const color = negative ? "#e31e24" : "#6f9d2d";
+    const labelWidth = Math.max(54, link.label.length * 6.4 + 18);
+    return `
+      <g class="map-connection cross-connection" data-source="${escapeXml(
+        link.from
+      )}" data-target="${escapeXml(link.to)}">
+      <path d="M ${sx} ${sy} Q ${cx} ${cy} ${tx} ${ty}" fill="none" stroke="${color}" stroke-width="3.2" ${
+        negative ? 'stroke-dasharray="10 7"' : ""
+      } marker-end="url(#cross-${negative ? "negative" : "positive"})"/>
+      <g transform="translate(${lx - labelWidth / 2} ${ly - 12})">
+        <rect width="${labelWidth}" height="24" rx="12" fill="#ffffff" stroke="${color}" stroke-opacity="0.25"/>
+        ${textLines([link.label], labelWidth / 2, 16, {
+          size: 10,
+          weight: 750,
+          fill: color,
+          anchor: "middle"
+        })}
+      </g>
+      </g>`;
+  }
+
+  function nodeMarkup(node, theme) {
+    const tone = tones[theme.tone] || tones.strength;
+    const displayCode = node.displayLabel || node.code.replaceAll("_", " ");
+    const codeLines = wrapText(displayCode, node.w > 300 ? 30 : 24, 2);
+    const codeY = node.y + node.h / 2 - ((codeLines.length - 1) * 8);
+    return `
+      <g class="map-node" data-code="${escapeXml(node.code)}" role="button" tabindex="0" aria-label="${escapeXml(
+        `${displayCode}: ${node.meaning}`
+      )}">
+        <title>${escapeXml(`${displayCode}: ${node.meaning}`)}</title>
+        <rect x="${node.x + 7}" y="${node.y + 8}" width="${node.w}" height="${node.h}" rx="12" fill="#243048" opacity="0.12"/>
+        <rect class="node-card" x="${node.x}" y="${node.y}" width="${node.w}" height="${node.h}" rx="12" fill="#ffffff" stroke="#d8dde7"/>
+        <rect x="${node.x}" y="${node.y}" width="9" height="${node.h}" rx="5" fill="${tone.accent}"/>
+        ${textLines(codeLines, node.x + node.w / 2 + 4, codeY, {
+          size: displayCode.length > 25 ? 11.5 : 13,
+          weight: 850,
+          fill: tone.accent,
+          anchor: "middle",
+          lineHeight: 16
+        })}
+      </g>`;
+  }
+
+  function closeDetails() {
+    if (!detailPanel) return;
+    detailPanel.hidden = true;
+    if (stage?.querySelectorAll) {
+      stage.querySelectorAll(".map-node.selected").forEach((node) => node.classList.remove("selected"));
+      stage.querySelectorAll(".connection-active").forEach((element) => element.classList.remove("connection-active"));
+      stage.classList.remove("connection-focus");
+    }
+  }
+
+  function highlightConnections(code) {
+    if (!stage?.querySelectorAll) return;
+    const activeCodes = new Set([code]);
+    const connections = [...stage.querySelectorAll(".map-connection")];
+
+    connections.forEach((connection) => {
+      const source = connection.getAttribute("data-source");
+      const target = connection.getAttribute("data-target");
+      const isActive = source === code || target === code;
+      connection.classList.toggle("connection-active", isActive);
+      if (isActive) {
+        if (source !== "CENTRALE_VARIABELE") activeCodes.add(source);
+        if (target !== "CENTRALE_VARIABELE") activeCodes.add(target);
+      }
+    });
+
+    stage.querySelectorAll(".map-node").forEach((node) => {
+      node.classList.toggle("connection-active", activeCodes.has(node.getAttribute("data-code")));
+    });
+    stage.classList.add("connection-focus");
+  }
+
+  function relationText(link, code) {
+    const otherCode = link.from === code ? link.to : link.from;
+    const direction = link.from === code ? "→" : "←";
+    const currentEntry = currentNodeLookup.get(code);
+    const otherEntry = currentNodeLookup.get(otherCode);
+    const currentLabel = currentEntry?.item.displayLabel || code.replaceAll("_", " ");
+    const otherLabel = otherEntry?.item.displayLabel || otherCode.replaceAll("_", " ");
+    return `${currentLabel} ${direction} ${link.label} ${direction} ${otherLabel}`;
+  }
+
+  function openDetails(code) {
+    if (!detailPanel) return;
+    const entry = currentNodeLookup.get(code);
+    if (!entry) return;
+    const { item, theme } = entry;
+    const polarity = itemPolarity(theme, item);
+    const related = (current.crossLinks || []).filter((link) => link.from === code || link.to === code);
+    const displayLabel = item.displayLabel || code.replaceAll("_", " ");
+
+    detailTheme.textContent = theme.title;
+    detailTitle.textContent = displayLabel;
+    detailMeaning.textContent = item.meaning;
+    detailAnalytical.textContent = item.analyticalTerm || code.replaceAll("_", " ");
+    detailAnalyticalRow.hidden = !item.displayLabel;
+    detailContextPerson.textContent =
+      item.literalSpeaker
+        ? `Letterlijke formulering uit interview met ${item.literalSpeaker}`
+        : current.id === "alle-interviews"
+        ? "Gezamenlijke context: 9 bewoners en 4 zorgprofessionals"
+        : `${current.name} — ${current.subtitle}`;
+    detailContext.textContent =
+      current.interviewContext || current.story;
+    detailInfluence.textContent =
+      polarity === "negative"
+        ? "Remt de centrale variabele of vergroot de kwetsbaarheid."
+        : "Ondersteunt de centrale variabele of maakt positieve verandering mogelijk.";
+    detailCenter.textContent = current.center;
+    detailSource.textContent = `Bron: ${current.source}`;
+    detailRelations.innerHTML = "";
+
+    related.forEach((link) => {
+      const listItem = document.createElement("li");
+      listItem.className = link.polarity === "negative" ? "negative" : "positive";
+      listItem.textContent = relationText(link, code);
+      detailRelations.appendChild(listItem);
+    });
+    detailRelationsSection.hidden = related.length === 0;
+
+    if (stage?.querySelectorAll) {
+      stage.querySelectorAll(".map-node").forEach((node) => {
+        node.classList.toggle("selected", node.getAttribute("data-code") === code);
+      });
+    }
+    highlightConnections(code);
+    detailPanel.hidden = false;
+  }
+
+  function centerMarkup(map, center) {
+    const title = wrapText(map.center, 31, 4);
+    const story = wrapText(map.story, 52, 4);
+    const leverage = wrapText(map.leverage, 46, 2);
+    return `
+      <g>
+        <rect x="${center.x + 11}" y="${center.y + 13}" width="${center.w}" height="${center.h}" rx="24" fill="#1a1a2e" opacity="0.18"/>
+        <rect x="${center.x}" y="${center.y}" width="${center.w}" height="${center.h}" rx="24" fill="#2b3990"/>
+        <rect x="${center.x}" y="${center.y}" width="${center.w}" height="9" rx="5" fill="#e31e24"/>
+        ${textLines(["CENTRALE VARIABELE"], center.x + 28, center.y + 34, {
+          size: 10.5,
+          weight: 850,
+          fill: "#fae8e8"
+        })}
+        ${textLines(title, center.x + 28, center.y + 62, {
+          size: 19,
+          weight: 820,
+          fill: "#ffffff",
+          lineHeight: 23
+        })}
+        ${textLines(story, center.x + 28, center.y + 154, {
+          size: 10,
+          weight: 500,
+          fill: "#dfe5f2",
+          lineHeight: 12.5
+        })}
+        <rect x="${center.x + 20}" y="${center.y + center.h - 74}" width="${center.w - 40}" height="58" rx="12" fill="#e31e24" opacity="0.2"/>
+        ${textLines(["HEFBOOM"], center.x + 32, center.y + center.h - 53, {
+          size: 9.5,
+          weight: 850,
+          fill: "#fae8e8"
+        })}
+        ${textLines(leverage, center.x + 32, center.y + center.h - 35, {
+          size: 10.3,
+          weight: 650,
+          fill: "#ffffff",
+          lineHeight: 12.5
+        })}
+      </g>`;
+  }
+
+  function renderMap(map) {
+    const center = { x: 726, y: 424, w: 348, h: 282 };
+    const lookup = new Map();
+    const renderedThemes = map.themes.map((theme, index) => {
+      const region = regions[index];
+      const items = itemLayout(theme, region);
+      items.forEach((item) => {
+        lookup.set(item.code, item);
+        currentNodeLookup.set(item.code, { item, theme });
+      });
+      return { theme, region, items };
+    });
+
+    const regionsMarkup = renderedThemes
+      .map(({ theme, region, items }) => {
+        const tone = tones[theme.tone] || tones.strength;
+        return `
+          <g>
+            <rect x="${region.x}" y="${region.y}" width="${region.w}" height="${region.h}" rx="46" fill="${tone.fill}" opacity="0.88"/>
+            <rect x="${region.x + 28}" y="${region.y + 28}" width="11" height="32" rx="5" fill="${tone.accent}"/>
+            ${textLines([theme.title], region.x + 52, region.y + 51, {
+              size: 21,
+              weight: 820,
+              fill: "#35405a"
+            })}
+            ${textLines([`${items.length} onderwerp${items.length === 1 ? "" : "en"}`], region.x + region.w - 32, region.y + 49, {
+              size: 10.5,
+              weight: 750,
+              fill: "#68738a",
+              anchor: "end"
+            })}
+          </g>`;
+      })
+      .join("");
+
+    let influenceIndex = 0;
+    const influenceLines = renderedThemes
+      .flatMap(({ theme, items }) =>
+        items.map((item) =>
+          lineToCenter(
+            item,
+            center,
+            itemPolarity(theme, item),
+            (tones[theme.tone] || tones.strength).line,
+            influenceIndex++
+          )
+        )
+      )
+      .join("");
+
+    const crossLinks = (map.crossLinks || []).map((link) => crossLink(link, lookup)).join("");
+    const nodes = renderedThemes
+      .flatMap(({ theme, items }) => items.map((item) => nodeMarkup(item, theme)))
+      .join("");
+    const privacy = map.privacy
+      ? textLines([map.privacy], 1750, 1087, {
+          size: 10.5,
+          weight: 700,
+          fill: "#a5161b",
+          anchor: "end",
+          italic: true
+        })
+      : "";
+
+    const svg = `
+      <svg xmlns="${NS}" viewBox="0 0 1800 1120" width="1800" height="1120" role="img" aria-labelledby="mapTitle mapDescription">
+        <title id="mapTitle">${escapeXml(map.name)} – individuele systeemkaart</title>
+        <desc id="mapDescription">${escapeXml(map.story)}</desc>
+        <defs>
+          <marker id="arrow-positive" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M 0 0 L 8 4 L 0 8 z" fill="#81909f" opacity="0.65"/>
+          </marker>
+          <marker id="arrow-negative" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <path d="M 0 0 L 8 4 L 0 8 z" fill="#e31e24" opacity="0.85"/>
+          </marker>
+          <marker id="cross-positive" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+            <path d="M 0 0 L 9 4.5 L 0 9 z" fill="#6f9d2d"/>
+          </marker>
+          <marker id="cross-negative" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+            <path d="M 0 0 L 9 4.5 L 0 9 z" fill="#e31e24"/>
+          </marker>
+        </defs>
+        <rect width="1800" height="1120" fill="#fafafa"/>
+        <rect width="1800" height="12" fill="#e31e24"/>
+        ${textLines([`${map.id.startsWith("alle-interviews") ? "GEÏNTEGREERDE" : "INDIVIDUELE"} SYSTEEMKAART · ${map.group.toUpperCase()}`], 52, 42, {
+          size: 11,
+          weight: 900,
+          fill: "#e31e24"
+        })}
+        ${textLines([map.name], 52, 81, {
+          size: 34,
+          weight: 850,
+          fill: "#1a1a2e"
+        })}
+        ${textLines([map.subtitle], 52, 108, {
+          size: 14,
+          weight: 600,
+          fill: "#69738a"
+        })}
+        ${textLines(["Bron", map.source], 1748, 50, {
+          size: 10,
+          weight: 750,
+          fill: "#68738a",
+          anchor: "end",
+          lineHeight: 17
+        })}
+        ${regionsMarkup}
+        <g aria-label="Invloed op de centrale variabele">${influenceLines}</g>
+        <g aria-label="Belangrijke onderlinge relaties">${crossLinks}</g>
+        <g aria-label="Onderwerpen">${nodes}</g>
+        ${centerMarkup(map, center)}
+        <g transform="translate(52 1030)">
+          <rect width="1696" height="62" rx="18" fill="#ffffff" stroke="#dde2ea"/>
+          <circle cx="29" cy="23" r="7" fill="#6f9d2d"/>
+          ${textLines(["ondersteunt / maakt mogelijk"], 44, 27, { size: 11, weight: 700, fill: "#526078" })}
+          <line x1="252" y1="23" x2="302" y2="23" stroke="#8d99a7" stroke-width="2.4" marker-end="url(#arrow-positive)"/>
+          ${textLines(["invloed op centrale variabele"], 318, 27, { size: 11, weight: 700, fill: "#526078" })}
+          <line x1="568" y1="23" x2="618" y2="23" stroke="#e31e24" stroke-width="2.5" stroke-dasharray="8 7" marker-end="url(#arrow-negative)"/>
+          ${textLines(["remt / vergroot kwetsbaarheid"], 634, 27, { size: 11, weight: 700, fill: "#526078" })}
+          ${textLines(["Interpretatie op basis van gecodeerde interviewanalyse; geen klinische beoordeling."], 1664, 27, {
+            size: 10.5,
+            weight: 620,
+            fill: "#7a8498",
+            anchor: "end"
+          })}
+          ${textLines(["Alle gecodeerde onderwerpen zijn één keer opgenomen."], 29, 48, {
+            size: 10,
+            weight: 600,
+            fill: "#8a93a4"
+          })}
+        </g>
+        ${privacy}
+      </svg>`;
+
+    stage.innerHTML = svg;
+    closeDetails();
+    document.title = `${map.name} – individuele systeemkaart`;
+  }
+
+  function renderControls() {
+    const groups = [...new Set(maps.map((map) => map.group))];
+    select.innerHTML = groups
+      .map(
+        (group) => `
+          <optgroup label="${escapeXml(group)}">
+            ${maps
+              .filter((map) => map.group === group)
+              .map(
+                (map) =>
+                  `<option value="${escapeXml(map.id)}"${map.id === current.id ? " selected" : ""}>${escapeXml(
+                    map.name
+                  )}</option>`
+              )
+              .join("")}
+          </optgroup>`
+      )
+      .join("");
+
+    index.innerHTML = maps
+      .map(
+        (map) => `
+          <button type="button" data-map="${escapeXml(map.id)}" class="${map.id === current.id ? "active" : ""}">
+            <strong>${escapeXml(map.name)}</strong>
+            <span>${escapeXml(map.group)} · ${map.themes.reduce((total, theme) => total + theme.items.length, 0)} onderwerpen</span>
+          </button>`
+      )
+      .join("");
+  }
+
+  function chooseMap(id, updateUrl = true) {
+    const chosen = maps.find((map) => map.id === id);
+    if (!chosen) return;
+    current = chosen;
+    currentNodeLookup = new Map();
+    renderMap(current);
+    renderControls();
+    if (updateUrl && !exportMode) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("map", current.id);
+      window.history.replaceState({}, "", url);
+    }
+  }
+
+  function downloadSvg() {
+    const svg = stage.querySelector("svg");
+    if (!svg) return;
+    const source = `<?xml version="1.0" encoding="UTF-8"?>\n${svg.outerHTML}`;
+    const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${current.id}-individuele-systeemkaart.svg`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  select.addEventListener("change", () => chooseMap(select.value));
+  index.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-map]");
+    if (button) chooseMap(button.dataset.map);
+  });
+  downloadButton.addEventListener("click", downloadSvg);
+  if (stage?.addEventListener) {
+    stage.addEventListener("click", (event) => {
+      const node = event.target.closest?.(".map-node");
+      if (node) openDetails(node.getAttribute("data-code"));
+    });
+    stage.addEventListener("keydown", (event) => {
+      const node = event.target.closest?.(".map-node");
+      if (node && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        openDetails(node.getAttribute("data-code"));
+      }
+    });
+  }
+  detailClose?.addEventListener("click", closeDetails);
+  document.addEventListener?.("keydown", (event) => {
+    if (event.key === "Escape") closeDetails();
+  });
+
+  renderMap(current);
+  renderControls();
+})();
+
+</script>
+  </body>
+</html>

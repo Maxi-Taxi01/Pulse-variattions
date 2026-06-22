@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pulse Rubroek — Design Iterations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #17211c;
+      --paper: #f1efe8;
+      --red: #e83c2f;
+      --blue: #2846a8;
+      --lime: #b9db48;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(185,219,72,.24), transparent 26rem),
+        radial-gradient(circle at 85% 4%, rgba(232,60,47,.16), transparent 27rem),
+        var(--paper);
+      color: var(--ink);
+      font-family: "DM Sans", sans-serif;
+    }
+    a { color: inherit; }
+    .wrap { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    header { padding: 88px 0 54px; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 14px 0 0 var(--lime);
+      margin-right: 14px;
+    }
+    h1 {
+      max-width: 900px;
+      margin: 22px 0 20px;
+      font-family: "Instrument Serif", serif;
+      font-size: clamp(54px, 9vw, 116px);
+      font-weight: 400;
+      line-height: .86;
+      letter-spacing: -.045em;
+    }
+    h1 em { color: var(--red); font-weight: 400; }
+    .intro {
+      max-width: 680px;
+      margin: 0;
+      color: #56625b;
+      font-size: clamp(16px, 2vw, 20px);
+      line-height: 1.6;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 34px;
+    }
+    .legend span {
+      padding: 8px 12px;
+      border: 1px solid rgba(23,33,28,.18);
+      border-radius: 999px;
+      background: rgba(255,255,255,.38);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    main { padding: 20px 0 100px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .card {
+      position: relative;
+      min-height: 520px;
+      overflow: hidden;
+      border: 1px solid rgba(23,33,28,.18);
+      border-radius: 28px;
+      text-decoration: none;
+      isolation: isolate;
+      transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease;
+    }
+    .card:hover {
+      transform: translateY(-7px) rotate(-.3deg);
+      box-shadow: 0 28px 70px rgba(32,38,34,.16);
+    }
+    .card:nth-child(even):hover { transform: translateY(-7px) rotate(.3deg); }
+    .card-bg {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+    }
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(180deg, transparent 25%, rgba(0,0,0,.78));
+    }
+    .card-content {
+      position: absolute;
+      inset: auto 0 0;
+      padding: 30px;
+      color: white;
+    }
+    .number {
+      position: absolute;
+      top: 24px;
+      right: 26px;
+      color: rgba(255,255,255,.9);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .12em;
+    }
+    .card h2 {
+      margin: 0 0 8px;
+      font-family: "Instrument Serif", serif;
+      font-size: clamp(36px, 5vw, 60px);
+      font-weight: 400;
+      line-height: .96;
+    }
+    .card p {
+      max-width: 48ch;
+      margin: 0 0 20px;
+      color: rgba(255,255,255,.76);
+      line-height: 1.55;
+    }
+    .open {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .open::after { content: "↗"; font-size: 17px; }
+    .editorial .card-bg {
+      background:
+        linear-gradient(90deg, transparent 49.7%, rgba(255,255,255,.22) 50%, transparent 50.3%),
+        repeating-linear-gradient(0deg, transparent 0 52px, rgba(255,255,255,.13) 53px),
+        #ba352d;
+    }
+    .night .card-bg {
+      background:
+        radial-gradient(circle at 76% 24%, #ff4c91 0 7%, transparent 8%),
+        radial-gradient(circle at 31% 36%, #7aff53 0 5%, transparent 6%),
+        conic-gradient(from 210deg at 70% 30%, #5323d8, #16122e, #ff3b6c, #16122e);
+    }
+    .neighbourhood .card-bg {
+      background:
+        radial-gradient(circle at 20% 18%, #f4d75b 0 12%, transparent 12.5%),
+        radial-gradient(circle at 74% 30%, #ff795d 0 15%, transparent 15.5%),
+        radial-gradient(circle at 48% 62%, #86c7a4 0 19%, transparent 19.5%),
+        #e8d9c4;
+    }
+    .atlas .card-bg {
+      background:
+        linear-gradient(rgba(83,228,197,.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(83,228,197,.12) 1px, transparent 1px),
+        radial-gradient(circle at 72% 27%, #ff644d 0 5px, transparent 6px),
+        radial-gradient(circle at 45% 52%, #c7ef63 0 5px, transparent 6px),
+        radial-gradient(circle at 24% 36%, #53e4c5 0 5px, transparent 6px),
+        #102b2d;
+      background-size: 32px 32px, 32px 32px, auto, auto, auto, auto;
+    }
+    footer {
+      padding: 28px 0 45px;
+      border-top: 1px solid rgba(23,33,28,.15);
+      color: #657169;
+      font-size: 12px;
+    }
+    @media (max-width: 760px) {
+      header { padding-top: 58px; }
+      .grid { grid-template-columns: 1fr; }
+      .card { min-height: 430px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="wrap">
+    <div class="eyebrow">Pulse Rubroek · design study</div>
+    <h1>Four ways to make the <em>same pulse</em> visible.</h1>
+    <p class="intro">These iterations preserve the live site’s evidence, maps and interactions while changing its tone, hierarchy and reading rhythm for different audiences.</p>
+    <div class="legend">
+      <span>Same content</span>
+      <span>Same data</span>
+      <span>Same interactions</span>
+      <span>Different design intent</span>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="grid">
+      <a class="card editorial" href="variants/editorial.html">
+        <div class="card-bg"></div><span class="number">01 / 04</span>
+        <div class="card-content">
+          <h2>Civic Editorial</h2>
+          <p>A composed public-interest publication for municipalities, care partners and funders. Strong reading hierarchy, clear rules and restrained civic colour.</p>
+          <span class="open">View iteration</span>
+        </div>
+      </a>
+      <a class="card night" href="variants/night.html">
+        <div class="card-bg"></div><span class="number">02 / 04</span>
+        <div class="card-content">
+          <h2>Pulse After Dark</h2>
+          <p>A vivid, cultural-program identity for events and younger participants. High contrast, glowing accents and a more kinetic rhythm.</p>
+          <span class="open">View iteration</span>
+        </div>
+      </a>
+      <a class="card neighbourhood" href="variants/neighbourhood.html">
+        <div class="card-bg"></div><span class="number">03 / 04</span>
+        <div class="card-content">
+          <h2>Neighbourhood Notebook</h2>
+          <p>A friendly, tactile direction for residents and co-creation sessions. Soft forms, warm paper tones and more personal storytelling.</p>
+          <span class="open">View iteration</span>
+        </div>
+      </a>
+      <a class="card atlas" href="variants/atlas.html">
+        <div class="card-bg"></div><span class="number">04 / 04</span>
+        <div class="card-content">
+          <h2>Systems Atlas</h2>
+          <p>A compact intelligence layer for researchers and coalition partners. Persistent navigation, denser cards and emphasis on maps and relationships.</p>
+          <span class="open">View iteration</span>
+        </div>
+      </a>
+    </div>
+  </main>
+  <footer><div class="wrap">Built as non-destructive design layers on the original Pulse Rubroek website.</div></footer>
+</body>
+</html>

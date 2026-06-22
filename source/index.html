@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pulse — Wijk Rubroek, Rotterdam</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --red: #E31E24;
+    --blue: #2B3990;
+    --green: #8DC63F;
+    --bg: #FAFAFA;
+    --bg-warm: #FAE8E8;
+    --text: #1a1a2e;
+    --text-secondary: #555;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 48px rgba(0,0,0,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    padding: 0 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+    transition: box-shadow 0.3s;
+  }
+  nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
+  .nav-logo {
+    font-size: 24px; font-weight: 900; color: var(--red);
+    letter-spacing: -0.5px; text-decoration: none;
+  }
+  .nav-logo span { font-weight: 400; color: var(--blue); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-left: 8px; }
+  .nav-links { display: flex; gap: 6px; }
+  .nav-links a {
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; color: var(--text-secondary);
+    text-decoration: none; transition: all 0.2s;
+  }
+  .nav-links a:hover, .nav-links a.active {
+    background: var(--bg-warm); color: var(--red);
+  }
+  .nav-dropdown {
+    position: relative;
+  }
+  .nav-dropdown > span {
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; color: var(--text-secondary);
+    cursor: pointer; transition: all 0.2s; user-select: none;
+  }
+  .nav-dropdown:hover > span,
+  .nav-dropdown > span:hover {
+    background: var(--bg-warm); color: var(--red);
+  }
+  .nav-dropdown .dropdown-menu {
+    display: none; position: absolute; top: 100%; left: 0;
+    background: #fff; border-radius: 12px; padding: 6px 0;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12); min-width: 160px;
+    z-index: 1001; margin-top: 4px;
+  }
+  .nav-dropdown:hover .dropdown-menu { display: block; }
+  .nav-dropdown .dropdown-menu a {
+    display: block; padding: 8px 18px; border-radius: 0;
+    font-size: 12px; white-space: nowrap;
+  }
+  .nav-dropdown .dropdown-menu a:hover {
+    background: var(--bg-warm); color: var(--red);
+  }
+
+  .nav-hamburger { display: none; background: none; border: none; cursor: pointer; padding: 8px; }
+  .nav-hamburger svg { width: 24px; height: 24px; stroke: var(--text); }
+
+  @media (max-width: 768px) {
+    .nav-links {
+      display: none; position: fixed; top: 60px; left: 0; right: 0;
+      background: rgba(255,255,255,0.98); backdrop-filter: blur(20px);
+      flex-direction: column; padding: 16px; gap: 4px;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .nav-links.open { display: flex; }
+    .nav-links a { padding: 12px 16px; border-radius: 12px; font-size: 14px; }
+    .nav-hamburger { display: block; }
+    .nav-dropdown .dropdown-menu {
+      position: static; box-shadow: none; margin-top: 0;
+      padding-left: 16px; display: none;
+    }
+    .nav-dropdown.open .dropdown-menu { display: block; }
+    .nav-dropdown > span { padding: 12px 16px; font-size: 14px; display: block; }
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(160deg, var(--bg-warm) 0%, #fff 50%, #EEF0F8 100%);
+    padding: 100px 32px 80px;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; top: -30%; right: -20%;
+    width: 700px; height: 700px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(227,30,36,0.06) 0%, transparent 70%);
+  }
+  .hero::after {
+    content: ''; position: absolute; bottom: -20%; left: -10%;
+    width: 500px; height: 500px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(43,57,144,0.05) 0%, transparent 70%);
+  }
+  .hero-content { max-width: 800px; position: relative; z-index: 1; text-align: center; }
+  .hero-badge {
+    display: inline-block; padding: 6px 16px; border-radius: 20px;
+    background: rgba(227,30,36,0.08); color: var(--red);
+    font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-size: clamp(40px, 7vw, 72px); font-weight: 900;
+    line-height: 1.05; letter-spacing: -2px; margin-bottom: 20px;
+  }
+  .hero h1 .red { color: var(--red); }
+  .hero h1 .blue { color: var(--blue); }
+  .hero p {
+    font-size: 18px; color: var(--text-secondary); max-width: 600px;
+    margin: 0 auto 36px; line-height: 1.7; font-weight: 400;
+  }
+  .hero-stats {
+    display: flex; gap: 40px; justify-content: center; flex-wrap: wrap;
+    margin-top: 48px;
+  }
+  .hero-stat { text-align: center; }
+  .hero-stat .num {
+    font-size: 36px; font-weight: 800; color: var(--red); line-height: 1;
+  }
+  .hero-stat .label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-secondary); margin-top: 4px; font-weight: 500;
+  }
+
+  /* ── SECTIONS ── */
+  section { padding: 80px 32px; }
+  .section-dark { background: #0f1117; color: #e0e0e0; }
+  .section-warm { background: var(--bg-warm); }
+  .section-header {
+    text-align: center; max-width: 700px; margin: 0 auto 48px;
+  }
+  .section-header h2 {
+    font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px;
+  }
+  .section-header p { color: var(--text-secondary); font-size: 15px; }
+  .section-dark .section-header p { color: #999; }
+
+  /* ── WIJK DATA GRID ── */
+  .data-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px; max-width: 1100px; margin: 0 auto;
+  }
+  .data-card {
+    background: #fff; border-radius: var(--radius); padding: 28px;
+    box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.04);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .data-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .data-card .icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; margin-bottom: 16px;
+  }
+  .data-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .data-card .value { font-size: 28px; font-weight: 800; color: var(--red); margin-bottom: 4px; }
+  .data-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+  /* ── ABOUT GRID ── */
+  .about-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
+    max-width: 1100px; margin: 0 auto; align-items: center;
+  }
+  @media (max-width: 768px) { .about-grid { grid-template-columns: 1fr; gap: 32px; } }
+  .about-text h3 { font-size: 22px; font-weight: 700; margin-bottom: 12px; }
+  .about-text p { font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; }
+  .about-visual {
+    background: linear-gradient(135deg, var(--bg-warm), #EEF0F8);
+    border-radius: var(--radius); padding: 40px;
+    text-align: center;
+  }
+  .about-visual .big-quote {
+    font-size: 18px; font-weight: 500; font-style: italic; color: var(--text);
+    line-height: 1.6; margin-bottom: 12px;
+  }
+  .about-visual .quote-author { font-size: 12px; color: var(--text-secondary); }
+
+  /* ── COALITIE ── */
+  .coalitie-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px; max-width: 1100px; margin: 0 auto;
+  }
+  .coalitie-card {
+    background: #fff; border-radius: var(--radius); padding: 24px;
+    border: 1px solid rgba(0,0,0,0.06); text-align: center;
+    transition: transform 0.2s;
+  }
+  .coalitie-card:hover { transform: translateY(-2px); }
+  .coalitie-card .dot {
+    width: 48px; height: 48px; border-radius: 50%;
+    margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 800; color: #fff;
+  }
+  .coalitie-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .coalitie-card p { font-size: 12px; color: var(--text-secondary); }
+
+  /* ── DOELGROEPEN ── */
+  .doelgroep-cards {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px; max-width: 1100px; margin: 0 auto;
+  }
+  .doelgroep-card {
+    border-radius: var(--radius); padding: 32px; color: #fff;
+    position: relative; overflow: hidden;
+  }
+  .doelgroep-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.1), transparent);
+  }
+  .doelgroep-card > * { position: relative; }
+  .doelgroep-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .doelgroep-card p { font-size: 13px; opacity: 0.9; line-height: 1.5; }
+  .doelgroep-card .quote {
+    margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.2);
+    font-style: italic; font-size: 13px; opacity: 0.85;
+  }
+
+  /* ── IFRAME CONTAINERS ── */
+  .iframe-wrap {
+    max-width: 1200px; margin: 0 auto;
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(0,0,0,0.06);
+    background: #fff;
+  }
+  .iframe-wrap iframe {
+    width: 100%; border: none; display: block;
+  }
+  .iframe-label {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px; background: #fff;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  .iframe-label h3 { font-size: 14px; font-weight: 700; }
+  .iframe-label a {
+    font-size: 12px; color: var(--red); text-decoration: none; font-weight: 500;
+  }
+  .iframe-label a:hover { text-decoration: underline; }
+
+  /* ── ORGANISATIES EMBED ── */
+  .org-embed {
+    max-width: 1100px; margin: 0 auto;
+    background: #fff; border-radius: var(--radius);
+    padding: 32px; box-shadow: var(--shadow);
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+
+  /* ── TIMELINE ── */
+  .timeline {
+    max-width: 800px; margin: 0 auto; position: relative;
+    padding-left: 40px;
+  }
+  .timeline::before {
+    content: ''; position: absolute; left: 14px; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(180deg, var(--red), var(--blue));
+    border-radius: 2px;
+  }
+  .timeline-item {
+    position: relative; margin-bottom: 36px;
+  }
+  .timeline-item::before {
+    content: ''; position: absolute; left: -32px; top: 6px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--red); border: 3px solid #fff;
+    box-shadow: 0 0 0 2px var(--red);
+  }
+  .timeline-item:nth-child(even)::before { background: var(--blue); box-shadow: 0 0 0 2px var(--blue); }
+  .timeline-item .date {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--red); margin-bottom: 4px;
+  }
+  .timeline-item:nth-child(even) .date { color: var(--blue); }
+  .timeline-item h4 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .timeline-item p { font-size: 13px; color: var(--text-secondary); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--text); color: #888; padding: 48px 32px;
+    text-align: center; font-size: 12px;
+  }
+  footer .footer-logo {
+    font-size: 28px; font-weight: 900; color: var(--red); margin-bottom: 8px;
+  }
+  footer p { margin-bottom: 4px; }
+  footer a { color: #aaa; text-decoration: none; }
+  footer a:hover { color: #fff; }
+
+  /* ── SCROLL ANIMATIONS ── */
+  .fade-in {
+    opacity: 0; transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── SOURCE INSPECTION MODE ── */
+  .source-toggle {
+    position: fixed; bottom: 24px; left: 24px; z-index: 9999;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--blue); color: #fff; border: none;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(43,57,144,0.35);
+    transition: all 0.25s ease;
+  }
+  .source-toggle:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(43,57,144,0.45); }
+  .source-toggle.active { background: var(--red); box-shadow: 0 4px 16px rgba(227,30,36,0.4); }
+  .source-toggle svg { width: 22px; height: 22px; pointer-events: none; }
+  .source-toggle-label {
+    position: fixed; bottom: 30px; left: 82px; z-index: 9999;
+    background: rgba(0,0,0,0.8); color: #fff; padding: 6px 14px;
+    border-radius: 8px; font-size: 12px; font-weight: 500;
+    pointer-events: none; opacity: 0; transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+  .source-toggle:hover ~ .source-toggle-label { opacity: 1; }
+
+  body.source-mode [data-source] {
+    cursor: pointer;
+    outline: 2px dashed rgba(227,30,36,0.25);
+    outline-offset: 4px;
+    transition: outline-color 0.15s, background 0.15s;
+  }
+  body.source-mode [data-source]:hover {
+    outline-color: var(--red);
+    background: rgba(227,30,36,0.04);
+  }
+
+  /* Source popover (click-triggered) */
+  .source-popover {
+    position: fixed; z-index: 10000;
+    background: #1a1a2e; color: #fff;
+    padding: 20px 24px; border-radius: 14px;
+    font-size: 13px; line-height: 1.6; max-width: 400px; min-width: 260px;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.35);
+    font-family: 'Inter', sans-serif;
+    opacity: 0; pointer-events: none;
+    transform: translateY(6px);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .source-popover.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .source-popover .source-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.45); margin-bottom: 6px; font-weight: 600;
+  }
+  .source-popover .source-text { font-weight: 500; margin-bottom: 14px; }
+  .source-popover .source-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: #fff; background: var(--red); text-decoration: none;
+    padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    transition: background 0.15s;
+  }
+  .source-popover .source-link:hover { background: #c41a1f; }
+  .source-popover .source-link svg { width: 14px; height: 14px; }
+  .source-popover .source-close {
+    position: absolute; top: 10px; right: 12px;
+    background: none; border: none; color: rgba(255,255,255,0.4);
+    cursor: pointer; padding: 4px; border-radius: 4px; font-size: 18px; line-height: 1;
+    transition: color 0.15s;
+  }
+  .source-popover .source-close:hover { color: #fff; }
+  .source-popover .source-divider {
+    height: 1px; background: rgba(255,255,255,0.1); margin: 12px 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="#hero" class="nav-logo">pulse <span>Rubroek</span></a>
+  <button class="nav-hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="nav-links">
+    <a href="#over">Over Pulse</a>
+    <a href="#wijk">Wijk Rubroek</a>
+    <a href="#kaart">Kaart</a>
+    <a href="#systeem">Systeemkaart</a>
+    <a href="#systemmap">System Map</a>
+    <a href="#organisaties">Organisaties</a>
+    <a href="#aanpak">Aanpak</a>
+    <a href="#coalitie">Coalitie</a>
+    <div class="nav-dropdown" onclick="this.classList.toggle('open')">
+      <span>Interviews &#9662;</span>
+      <div class="dropdown-menu">
+        <a href="#jongeren">Jongeren</a>
+        <a href="ouderen-interviews.html">Ouderen</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <div class="hero-badge" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 1)">Wijk Rubroek &middot; Rotterdam &middot; 2025 &ndash; 2027</div>
+    <h1><span class="red">pulse</span><br><span class="blue">Rubroek</span></h1>
+    <p data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 2): Visie & missie">Ritme voor een veerkrachtige samenleving. We bouwen verder aan een samenleving waarin jong en oud elkaar versterken door het inzetten van creativiteit, verbeeldingskracht en samenwerking. Van verkennen naar verankeren, van losse ontmoetingen naar een blijvende beweging.</p>
+    <div class="hero-stats">
+      <div class="hero-stat" data-source="Wijkprofiel Rotterdam 2024 — Rubroek"><div class="num">8.400+</div><div class="label">Bewoners</div></div>
+      <div class="hero-stat" data-source="Rubroek organisaties KML — Google Maps / veldonderzoek Karabijn"><div class="num">83</div><div class="label">Organisaties</div></div>
+      <div class="hero-stat" data-source="Wijkprofiel Rotterdam 2024 — Rubroek: huishoudenssamenstelling"><div class="num">59%</div><div class="label">Alleenstaanden</div></div>
+      <div class="hero-stat" data-source="AlleCijfers.nl / CBS — Buurt Rubroek (2025): herkomst bevolking"><div class="num">48%</div><div class="label">Buiten Europa</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- OVER PULSE -->
+<section id="over">
+  <div class="about-grid fade-in">
+    <div class="about-text" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 3): Waarom Pulse?">
+      <h3>Waarom Pulse?</h3>
+      <p>In een samenleving waarin mentale druk onder jongeren toeneemt en ouderen kampen met structurele eenzaamheid, zoeken we naar nieuwe manieren van samenleven. Niet als tijdelijke interventie, maar als een beweging waarin jong en oud elkaar opnieuw ontmoeten &mdash; en versterken.</p>
+      <p>We vertrekken vanuit een ontwerpende houding: niet de oplossing staat centraal, maar de ontmoeting. Door samen te ontwerpen aan betekenisvolle interactie bouwen we aan nieuwe vormen van wederzijdse ondersteuning &mdash; waarin creativiteit, eigenaarschap en verbeeldingskracht de motor zijn van verandering.</p>
+      <p>De formele zorg loopt vast, het sociaal weefsel brokkelt af en maatschappelijke druk neemt toe. Tegelijk zien we een verlangen naar verbinding, naar zingeving en naar het samen dragen van verantwoordelijkheid. Pulse brengt die beweging op gang &mdash; klein en lokaal, maar systemisch van aard.</p>
+    </div>
+    <div class="about-visual" data-source="Publicatie Pulse V0.1 (Jongeren) — Persona's & gebruikersinterviews">
+      <div class="big-quote">&lsquo;Er zijn dagen dat ik alleen de caissi&egrave;re spreek. Soms ben ik best wel alleen.&rsquo;</div>
+      <div class="quote-author">Mevr. Eikenhorst (87), bewoner Rubroek</div>
+    </div>
+  </div>
+</section>
+
+<!-- DOELGROEPEN -->
+<section class="section-warm" id="doelgroepen">
+  <div class="section-header fade-in">
+    <h2>Voor wie?</h2>
+    <p>Pulse richt zich op vier doelgroepen die samen de kern vormen van het programma</p>
+  </div>
+  <div class="doelgroep-cards fade-in">
+    <div class="doelgroep-card" style="background: linear-gradient(135deg, #1a5276, #2e86c1);" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 7): Doelgroepen — Ouderen">
+      <h4>Ouderen in verpleeghuizen</h4>
+      <p>Vaak afhankelijk van zorg en sociale interactie binnen een instelling. Behoefte aan aandacht, verbinding en passende ondersteuning. Na gesprekken met de ouderen zelf kijken we welke personen in aanmerking komen om te participeren.</p>
+      <div class="quote">&lsquo;Ze vragen hoe het gaat. Maar ik weet niet of ze het antwoord echt willen horen.&rsquo; &mdash; Bert (84)</div>
+    </div>
+    <div class="doelgroep-card" style="background: linear-gradient(135deg, #8e44ad, #af7ac5);" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 7): Doelgroepen — Jongeren">
+      <h4>Jongeren met mentale gezondheidsuitdagingen</h4>
+      <p>Ervaren eenzaamheid, prestatiedruk en mentale problemen door maatschappelijke verwachtingen, sociale media en onzekerheid over de toekomst. Baat bij herkenning, steun en laagdrempelige hulpverlening.</p>
+      <div class="quote">&lsquo;Misschien is het makkelijker om te praten als het ergens over g&aacute;&aacute;t.&rsquo; &mdash; Kelly (19)</div>
+    </div>
+    <div class="doelgroep-card" style="background: linear-gradient(135deg, #148f77, #1abc9c);" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 7): Doelgroepen — Zorgprofessionals">
+      <h4>Zorgprofessionals &amp; welzijnswerkers</h4>
+      <p>Begeleiden en ondersteunen kwetsbare ouderen en jongeren. Werken in een uitdagende omgeving met groeiende werkdruk en emotionele belasting. Samen op zoek naar nieuwe oplossingsrichtingen buiten de gebaande paden.</p>
+      <div class="quote">&lsquo;Ik hou van dit werk, maar soms denk ik: is dit het nou?&rsquo; &mdash; Anne (40)</div>
+    </div>
+    <div class="doelgroep-card" style="background: linear-gradient(135deg, #1a1a2e, #2B3990);" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 7): Doelgroepen — Beleidsmakers">
+      <h4>Beleidsmakers</h4>
+      <p>Cre&euml;ren kaders en voorzieningen om een inclusieve samenleving te realiseren. Effectief beleid vraagt om een scherpe blik, samenwerking en oog voor de menselijke maat. Maar ook af en toe het lef om buiten de lijntjes te kleuren.</p>
+      <div class="quote">&lsquo;Ik vind het belangrijk om een rolmodel te zien.&rsquo; &mdash; Hicham (16)</div>
+    </div>
+  </div>
+</section>
+
+<!-- WIJK RUBROEK DATA -->
+<section id="wijk">
+  <div class="section-header fade-in">
+    <h2>Wijk Rubroek</h2>
+    <p>Kralingen-Crooswijk, Rotterdam &mdash; een diverse wijk met een sterke buurtidentiteit</p>
+  </div>
+  <div class="data-grid fade-in">
+    <div class="data-card" data-source="Wijkprofiel Rotterdam 2024 — Rubroek: bevolkingsomvang">
+      <div class="icon" style="background: rgba(227,30,36,0.1);">&#x1F3D8;&#xFE0F;</div>
+      <div class="value">8.400+</div>
+      <h3>Bewoners</h3>
+      <p>Rubroek is een compacte, dichtbebouwde wijk in Rotterdam-Noord met een diverse bevolkingssamenstelling.</p>
+    </div>
+    <div class="data-card" data-source="Wijkprofiel Rotterdam 2024 — Rubroek: huishoudenssamenstelling">
+      <div class="icon" style="background: rgba(43,57,144,0.1);">&#x1F46A;</div>
+      <div class="value">59%</div>
+      <h3>Alleenstaanden</h3>
+      <p>Een groot deel van de bewoners woont alleen. Dit vergroot het risico op eenzaamheid en isolement.</p>
+    </div>
+    <div class="data-card" data-source="AlleCijfers.nl / CBS — Buurt Rubroek (2025): herkomst bevolking">
+      <div class="icon" style="background: rgba(141,198,63,0.1);">&#x1F30D;</div>
+      <div class="value">48%</div>
+      <h3>Buiten-Europese herkomst</h3>
+      <p>Van de bewoners heeft 48% een herkomst van buiten Europa, 15% uit andere Europese landen en 37% een Nederlandse achtergrond.</p>
+    </div>
+    <div class="data-card" data-source="Rubroek organisaties KML — Veldonderzoek Karabijn: categorie Winkels & Horeca">
+      <div class="icon" style="background: rgba(239,159,39,0.1);">&#x1F3EA;</div>
+      <div class="value">39</div>
+      <h3>Winkels &amp; Horeca</h3>
+      <p>Van supermarkten en kappers tot restaurants en lunchrooms langs de Goudsesingel en Jonker Fransstraat.</p>
+    </div>
+    <div class="data-card" data-source="Rubroek organisaties KML — Veldonderzoek Karabijn: categorie Zorg & Welzijn">
+      <div class="icon" style="background: rgba(29,158,117,0.1);">&#x1F3E5;</div>
+      <div class="value">18</div>
+      <h3>Zorg &amp; Welzijn</h3>
+      <p>Huisartsen, tandartsen, apotheken, fysiotherapeuten en ouderenzorgorganisaties in de wijk.</p>
+    </div>
+    <div class="data-card" data-source="Rubroek organisaties KML — Veldonderzoek Karabijn: categorie Buurt & Jongerencentra">
+      <div class="icon" style="background: rgba(127,119,221,0.1);">&#x1F3D7;&#xFE0F;</div>
+      <div class="value">5</div>
+      <h3>Buurt- &amp; Jongerencentra</h3>
+      <p>Waaronder Wijkgebouw De Bron, Cruyff Court Rubroek en Gymzaal Alkemadehof.</p>
+    </div>
+    <div class="data-card" data-source="Rubroek organisaties KML — Veldonderzoek Karabijn: categorie Bedrijven & Diensten">
+      <div class="icon" style="background: rgba(216,90,48,0.1);">&#x1F3E2;</div>
+      <div class="value">19</div>
+      <h3>Bedrijven &amp; Diensten</h3>
+      <p>Lokale dienstverleners: van slotenmakers en wasserettes tot architecten en massagesalons.</p>
+    </div>
+    <div class="data-card" data-source="Rubroek organisaties KML — Veldonderzoek Karabijn: categorie Onderwijs">
+      <div class="icon" style="background: rgba(55,138,221,0.1);">&#x1F393;</div>
+      <div class="value">5</div>
+      <h3>Onderwijsinstellingen</h3>
+      <p>Basisscholen, speciaal onderwijs en taalscholen voor de jongste bewoners van Rubroek.</p>
+    </div>
+    <div class="data-card" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 6): Jeugdwerkloosheid Rotterdam / Gemeente Rotterdam Jeugdmonitor">
+      <div class="icon" style="background: rgba(227,30,36,0.1);">&#x26A0;&#xFE0F;</div>
+      <div class="value">1 op 9</div>
+      <h3>Jongeren zonder school/werk</h3>
+      <p>Van Rotterdamse jongeren (15&ndash;27 jaar) gaat niet naar school of heeft geen werk. Grip op de eigen omgeving is niet vanzelfsprekend.</p>
+    </div>
+  </div>
+</section>
+
+<!-- KAART RUBROEK -->
+<section class="section-warm" id="kaart">
+  <div class="section-header fade-in">
+    <h2>Kaart Rubroek</h2>
+    <p>Interactieve kaart met alle 83 organisaties in wijk Rubroek, geplot op locatie</p>
+  </div>
+  <div class="iframe-wrap fade-in" data-source="pulse-kaart-rubroek.html — Leaflet kaart op basis van rubroek_organisaties.kml (Google Maps / veldonderzoek Karabijn)">
+    <div class="iframe-label">
+      <h3>Organisaties op de kaart</h3>
+      <a href="pulse-kaart-rubroek.html" target="_blank">Openen in nieuw venster &rarr;</a>
+    </div>
+    <iframe src="pulse-kaart-rubroek.html" style="height: 600px;" loading="lazy" title="Kaart Rubroek"></iframe>
+  </div>
+</section>
+
+<!-- SYSTEEMKAART -->
+<section id="systeem">
+  <div class="section-header fade-in">
+    <h2>Systeemkaart</h2>
+    <p>Het netwerk van de kerncoalitie, lokale organisaties en bewoners &mdash; gecombineerd met de wijkkaart</p>
+  </div>
+  <div class="iframe-wrap fade-in" data-source="pulse-systeemkaart-rubroek.html — Netwerkvisualisatie op basis van Pulse Agis Fase 2 coalitiestructuur">
+    <div class="iframe-label">
+      <h3>Pulse Netwerk &amp; Wijkkaart</h3>
+      <a href="pulse-systeemkaart-rubroek.html" target="_blank">Openen in nieuw venster &rarr;</a>
+    </div>
+    <iframe src="pulse-systeemkaart-rubroek.html" style="height: 700px;" loading="lazy" title="Systeemkaart Rubroek"></iframe>
+  </div>
+</section>
+
+<!-- SYSTEM MAP (dark) -->
+<section class="section-dark" id="systemmap">
+  <div class="section-header fade-in">
+    <h2 style="color:#fff;">System Map</h2>
+    <p>Volledig systeem van actoren, organisaties, kernwaarden en thema&rsquo;s rondom de intergenerationele co-creatieve ruimte</p>
+  </div>
+  <div class="iframe-wrap fade-in" style="border-color: rgba(255,255,255,0.1);" data-source="system-map-rubroek.html — D3.js systeemkaart op basis van Pulse Agis Fase 2 & organisatiedata Rubroek">
+    <div class="iframe-label" style="background: #1a1a2e; border-color: rgba(255,255,255,0.08);">
+      <h3 style="color: #fff;">System Map &mdash; Wijk Rubroek</h3>
+      <a href="system-map-rubroek.html" target="_blank" style="color: #e94560;">Openen in nieuw venster &rarr;</a>
+    </div>
+    <iframe src="system-map-rubroek.html" style="height: 700px;" loading="lazy" title="System Map Rubroek"></iframe>
+  </div>
+</section>
+
+<!-- ORGANISATIES OVERZICHT -->
+<section id="organisaties">
+  <div class="section-header fade-in">
+    <h2>Organisaties in Rubroek</h2>
+    <p>Compleet overzicht van alle winkels, zorg, bedrijven, onderwijs en buurtvoorzieningen</p>
+  </div>
+  <div class="org-embed fade-in" id="org-container" data-source="organisaties_rubroek_compleet.html — Veldonderzoek Karabijn & Google Maps inventarisatie"></div>
+</section>
+
+<!-- AANPAK / TIMELINE -->
+<section class="section-warm" id="aanpak">
+  <div class="section-header fade-in">
+    <h2>Aanpak &amp; Planning</h2>
+    <p>Pulse werkt ontwerpend: verkennen, schetsen, testen en leren. Het programma volgt een Triple Diamond-proces met een derde diamant voor Scale &amp; Katalyse.</p>
+  </div>
+  <div class="timeline fade-in">
+    <div class="timeline-item" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 8): Werkwijze — Imagine & Define">
+      <div class="date">Fase 1 &mdash; Okt 2025 &ndash; Feb 2026</div>
+      <h4>Imagine &amp; Define</h4>
+      <p>Gezamenlijke visie &amp; waarde formuleren met alle doelgroepen, organisaties en ontwerpende partners. Hackathon &lsquo;Future Pulses&rsquo;: dromen over de toekomst in 2050 met zorgprofessionals, jongeren en ouderen.</p>
+    </div>
+    <div class="timeline-item" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 9): Werkwijze — Develop & Experiment">
+      <div class="date">Fase 2 &mdash; Feb &ndash; Juni 2026</div>
+      <h4>Develop &amp; Experiment</h4>
+      <p>Drie labs op drie niveaus van verandering: Lab Persoonlijk (creatieve interventies voor ontmoeting en ondersteuning), Lab Organisatie (aanpassingen in beleid, structuur en cultuur), Lab Eco-systeem (samenwerking toekomstbestendig maken). Elk lab minimaal 3 maanden met pilotgroep en 3 testmomenten.</p>
+    </div>
+    <div class="timeline-item" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 9): Werkwijze — Make & Deliver">
+      <div class="date">Fase 3 &mdash; Juli &ndash; Sept 2026</div>
+      <h4>Make &amp; Deliver</h4>
+      <p>Oplevering van methodes, visies en middelen (tools) uit ieder lab. Resultaten worden nog een laatste keer getest en gefinetuned voor de volgende fase.</p>
+    </div>
+    <div class="timeline-item" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 10): Werkwijze — Scale & Katalyse">
+      <div class="date">Fase 4 &mdash; Okt &ndash; Dec 2026 (FvcP t/m Mrt 2027)</div>
+      <h4>Scale &amp; Katalyse</h4>
+      <p>Drie sporen: lokale borging via overdracht naar de praktijk (Laurens, Rotterdamse Douwers), adaptieve opschaling naar andere wijken en instellingen, en systemische katalyse via lerende netwerken. Toolkit, train-de-trainer-sessies en narratieve evaluatie.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COALITIE -->
+<section id="coalitie">
+  <div class="section-header fade-in">
+    <h2>Samenwerkingscoalitie</h2>
+    <p>Pulse wordt gedragen door een brede coalitie van partners die expertise en netwerk inzetten</p>
+  </div>
+  <div class="coalitie-grid fade-in">
+    <div class="coalitie-card" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 13): Samenwerking — Design team">
+      <div class="dot" style="background: var(--red);">DT</div>
+      <h4>Design team</h4>
+      <p>Samenwerkingsverband van Karabijn (netwerkregie), Studio Laura Koenen (social design) en Stichting &amp; (projectuitvoering). Regisseert Pulse, begeleidt de ontwerpprocessen en draagt zorg voor uitvoering.</p>
+    </div>
+    <div class="coalitie-card" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 13): Samenwerking — Laurens">
+      <div class="dot" style="background: #148f77;">L</div>
+      <h4>Laurens</h4>
+      <p>Grote ouderenzorgorganisatie in Rotterdam. Biedt praktijkervaring, pilotlocaties en betrokken professionals om samen met ouderen te experimenteren in de dagelijkse zorg.</p>
+    </div>
+    <div class="coalitie-card" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 13): Samenwerking — Jongerenorganisaties">
+      <div class="dot" style="background: #8e44ad;">J</div>
+      <h4>Jongerenorganisaties</h4>
+      <p>Zoals jongerenwerkers in Rotterdam. Zorgen voor verbinding met jongeren uit diverse achtergronden en brengen kennis van informele ondersteuning en mentale gezondheid in.</p>
+    </div>
+    <div class="coalitie-card" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 13): Samenwerking — Gemeente">
+      <div class="dot" style="background: var(--blue);">G</div>
+      <h4>Gemeente Rotterdam</h4>
+      <p>Het Wmo-beleid vormt het beleidskader &eacute;n een potenti&euml;le opschalingspartner: via deze lijn verkennen we hoe inzichten kunnen doorwerken naar structurele gemeentelijke ondersteuning.</p>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTATEN -->
+<section class="section-warm">
+  <div class="section-header fade-in">
+    <h2>Beoogde resultaten</h2>
+    <p>Pulse werkt op drie niveaus: persoonlijk, relationeel en systemisch</p>
+  </div>
+  <div class="data-grid fade-in" style="max-width: 900px;">
+    <div class="data-card" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 14): Doelen — Persoonlijke versterking">
+      <h3>Persoonlijke versterking</h3>
+      <p>Deelnemers ontwikkelen waardevolle vaardigheden zoals luisteren, reflecteren, presenteren en samenwerken. Door het delen van persoonlijke verhalen en dromen ontstaan empathie en zelfinzicht. Ook professionals leren anders kijken naar nieuwe manieren van zorg verlenen.</p>
+    </div>
+    <div class="data-card" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 14): Doelen — Eigenaarschap">
+      <h3>Eigenaarschap</h3>
+      <p>Pulse is gebouwd op co-creatie. Deelnemers zijn geen object van onderzoek, maar mede-ontwerpers van oplossingen. In elke fase bepalen zij mee hoe het traject vorm krijgt. Gedeelde regie vergroot betrokkenheid, vertrouwen en motivatie.</p>
+    </div>
+    <div class="data-card" data-source="Pulse Agis Fase 2 — Plan van aanpak (okt 2025) (p. 14–15): Doelen — Nieuwe verbindingen & opbrengsten">
+      <h3>Nieuwe verbindingen</h3>
+      <p>Het programma verbindt mensen en werelden die elkaar niet vanzelfsprekend ontmoeten: jongeren, ouderen, ontwerpers en zorgmedewerkers. Het project vormt een brug tussen sectoren als zorg, cultuur en onderwijs. Overdraagbare methodiek en toolkit voor intergenerationeel contact.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">pulse</div>
+  <p>Ritme voor een veerkrachtige samenleving</p>
+  <p style="margin-top: 12px;">Wijk Rubroek &middot; Kralingen-Crooswijk &middot; Rotterdam</p>
+  <p>Design team (Karabijn &middot; Studio Laura Koenen &middot; Stichting &amp;) &middot; Laurens &middot; Jongerenorganisaties &middot; Gemeente Rotterdam</p>
+  <p style="margin-top: 20px; color: #555;">&copy; 2025&ndash;2027 Pulse &middot; Co-creatie programma</p>
+</footer>
+
+<!-- SOURCE INSPECTION BUTTON -->
+<button class="source-toggle" id="source-toggle" aria-label="Bronweergave aan/uit" title="Bronnen bekijken">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+</button>
+<span class="source-toggle-label">Bronnen bekijken</span>
+
+<div class="source-popover" id="source-popover">
+  <button class="source-close" id="source-close">&times;</button>
+  <div class="source-label">Bron</div>
+  <div class="source-text" id="source-text"></div>
+  <div class="source-divider"></div>
+  <a class="source-link" id="source-link" href="#" target="_blank">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    <span id="source-link-label">Open bron</span>
+  </a>
+</div>
+
+<script>
+// ── Load organisaties HTML into container ──
+fetch('organisaties_rubroek_compleet.html')
+  .then(r => r.text())
+  .then(html => {
+    const container = document.getElementById('org-container');
+    container.innerHTML = html;
+    // Scripts injected via innerHTML don't execute — register filter function manually
+    window.filter = function(cat) {
+      container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      const btn = container.querySelector('.fb-' + (cat === 'all' ? 'all' : cat));
+      if (btn) btn.classList.add('active');
+      container.querySelectorAll('.section').forEach(s => {
+        s.style.display = (cat === 'all' || s.dataset.cat === cat) ? 'block' : 'none';
+      });
+    };
+  })
+  .catch(() => {
+    document.getElementById('org-container').innerHTML = '<p style="color:#999;text-align:center;">Kon organisaties niet laden.</p>';
+  });
+
+// ── Nav scroll effect ──
+const nav = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 20);
+});
+
+// ── Active nav link ──
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+
+// ── Close mobile menu on link click ──
+navLinks.forEach(a => {
+  a.addEventListener('click', () => {
+    document.querySelector('.nav-links').classList.remove('open');
+  });
+});
+
+// ── Scroll animations ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// ── Source Inspection Mode (click-based) ──
+(function() {
+  const btn = document.getElementById('source-toggle');
+  const popover = document.getElementById('source-popover');
+  const sourceText = document.getElementById('source-text');
+  const sourceLink = document.getElementById('source-link');
+  const sourceLinkLabel = document.getElementById('source-link-label');
+  const sourceClose = document.getElementById('source-close');
+  let active = false;
+  let currentEl = null;
+
+  // Source link mapping
+  const sourceLinks = {
+    'Pulse Agis Fase 2': { url: 'LK_Pulse_Agis_Fase2.pdf', label: 'Open Pulse Agis Fase 2 (PDF)' },
+    'Publicatie Pulse V0.1': { url: 'Publicatie Pulse_V0.1 (Jongeren) (1).pdf', label: 'Open Publicatie V0.1 (PDF)' },
+    'Wijkprofiel Rotterdam 2024': { url: 'https://wijkprofiel.rotterdam.nl/nl/2024/rotterdam/kralingen-crooswijk/rubroek', label: 'Open Wijkprofiel Rubroek' },
+    'AlleCijfers.nl / CBS': { url: 'https://allecijfers.nl/buurt/rubroek-rotterdam/', label: 'Open AlleCijfers — Rubroek' },
+    'Rubroek organisaties KML': { url: 'rubroek_organisaties.kml', label: 'Open organisaties KML' },
+    'pulse-kaart-rubroek': { url: 'pulse-kaart-rubroek.html', label: 'Open Kaart Rubroek' },
+    'pulse-systeemkaart': { url: 'pulse-systeemkaart-rubroek.html', label: 'Open Systeemkaart' },
+    'system-map-rubroek': { url: 'system-map-rubroek.html', label: 'Open System Map' },
+    'organisaties_rubroek_compleet': { url: 'organisaties_rubroek_compleet.html', label: 'Open Organisaties overzicht' },
+    'Gemeente Rotterdam Jeugdmonitor': { url: 'https://wijkprofiel.rotterdam.nl/nl/2024/rotterdam/kralingen-crooswijk/rubroek', label: 'Open Wijkprofiel Rubroek' },
+  };
+
+  function resolveLink(sourceStr) {
+    for (const [key, val] of Object.entries(sourceLinks)) {
+      if (sourceStr.includes(key)) return val;
+    }
+    return null;
+  }
+
+  function positionPopover(anchorRect) {
+    const pad = 12;
+    popover.style.left = '0'; popover.style.top = '0';
+    popover.classList.add('visible');
+    const pr = popover.getBoundingClientRect();
+    let x = anchorRect.left + anchorRect.width / 2 - pr.width / 2;
+    let y = anchorRect.bottom + pad;
+    if (y + pr.height > window.innerHeight - pad) y = anchorRect.top - pr.height - pad;
+    if (x < pad) x = pad;
+    if (x + pr.width > window.innerWidth - pad) x = window.innerWidth - pr.width - pad;
+    popover.style.left = x + 'px';
+    popover.style.top = y + 'px';
+  }
+
+  function closePopover() {
+    popover.classList.remove('visible');
+    if (currentEl) { currentEl.style.outline = ''; currentEl = null; }
+  }
+
+  btn.addEventListener('click', () => {
+    active = !active;
+    btn.classList.toggle('active', active);
+    document.body.classList.toggle('source-mode', active);
+    if (!active) closePopover();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!active) return;
+    if (e.target.closest('.source-toggle') || e.target.closest('.source-popover')) return;
+
+    const el = e.target.closest('[data-source]');
+    if (el) {
+      e.preventDefault();
+      e.stopPropagation();
+      closePopover();
+
+      currentEl = el;
+      el.style.outline = '2px solid var(--red)';
+      sourceText.textContent = el.dataset.source;
+
+      const link = resolveLink(el.dataset.source);
+      if (link) {
+        sourceLink.href = link.url;
+        sourceLinkLabel.textContent = link.label;
+        sourceLink.style.display = 'inline-flex';
+      } else {
+        sourceLink.style.display = 'none';
+      }
+
+      positionPopover(el.getBoundingClientRect());
+    } else {
+      closePopover();
+    }
+  }, true);
+
+  sourceClose.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closePopover();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (popover.classList.contains('visible')) closePopover();
+      else if (active) { active = false; btn.classList.remove('active'); document.body.classList.remove('source-mode'); }
+    }
+  });
+})();
+</script>
+</body>
+</html>

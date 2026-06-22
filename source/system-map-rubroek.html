@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Map — Wijk Rubroek (Pulse)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0f1117;
+    color: #e0e0e0;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  #bg-map {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+    opacity: 0.38;
+    pointer-events: none;
+  }
+  #bg-map .leaflet-tile-pane { filter: saturate(0.5) brightness(0.9); }
+  #bg-map .leaflet-control-attribution { display: none; }
+
+  #canvas-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+    z-index: 2;
+    background: transparent;
+  }
+  #canvas-container:active { cursor: grabbing; }
+
+  svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  svg line, svg path { pointer-events: none; }
+
+  #world {
+    position: absolute;
+    transform-origin: 0 0;
+  }
+
+  .node {
+    position: absolute;
+    border-radius: 14px;
+    padding: 12px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+    user-select: none;
+    z-index: 2;
+    max-width: 200px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.35;
+    border: 2px solid transparent;
+  }
+  .node:hover {
+    transform: scale(1.08);
+    z-index: 10;
+    filter: brightness(1.15);
+  }
+  .node.dimmed { opacity: 0.12; filter: blur(1px); }
+  .node.highlighted { filter: brightness(1.25); z-index: 10; }
+
+  /* Node type colors */
+  .node-actor {
+    background: linear-gradient(135deg, #1a5276, #1f6f8b);
+    border-color: #2e86c1;
+    color: #d6eaf8;
+    box-shadow: 0 4px 20px rgba(46,134,193,0.3);
+  }
+  .node-pulse {
+    background: linear-gradient(135deg, #6c3483, #8e44ad);
+    border-color: #af7ac5;
+    color: #f4ecf7;
+    box-shadow: 0 4px 20px rgba(142,68,173,0.35);
+  }
+  .node-wijk {
+    background: linear-gradient(135deg, #0e6655, #148f77);
+    border-color: #1abc9c;
+    color: #d5f5e3;
+    box-shadow: 0 4px 20px rgba(20,143,119,0.3);
+  }
+  .node-org {
+    background: linear-gradient(135deg, #1a5e2a, #1e8040);
+    border-color: #27ae60;
+    color: #d5f5e3;
+    box-shadow: 0 4px 20px rgba(39,174,96,0.3);
+  }
+  .node-omg {
+    background: linear-gradient(135deg, #6b1a4e, #9b2d72);
+    border-color: #e056a0;
+    color: #fde8f4;
+    box-shadow: 0 4px 20px rgba(224,86,160,0.3);
+  }
+  .node-waarde {
+    background: linear-gradient(135deg, #922b21, #c0392b);
+    border-color: #e74c3c;
+    color: #fdedec;
+    box-shadow: 0 4px 20px rgba(231,76,60,0.3);
+  }
+  .node-thema {
+    background: linear-gradient(135deg, #784212, #af601a);
+    border-color: #e67e22;
+    color: #fdebd0;
+    box-shadow: 0 4px 20px rgba(230,126,34,0.3);
+  }
+  .node-center {
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    border: 3px solid #e94560;
+    color: #ffffff;
+    box-shadow: 0 6px 35px rgba(233,69,96,0.4);
+    font-size: 15px;
+    font-weight: 700;
+    max-width: 260px;
+    padding: 18px 22px;
+    z-index: 5;
+  }
+
+  /* Legend */
+  #legend {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    background: rgba(15,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 16px 20px;
+    z-index: 100;
+    font-size: 12px;
+    min-width: 210px;
+  }
+  #legend h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #fff;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  /* Title bar */
+  #title-bar {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 12px 28px;
+    z-index: 100;
+    text-align: center;
+  }
+  #title-bar h1 {
+    font-size: 18px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #e94560, #48b5c4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  #title-bar p { font-size: 11px; color: #888; margin-top: 2px; }
+
+  /* Tooltip */
+  #tooltip {
+    position: fixed;
+    display: none;
+    background: rgba(15,17,23,0.95);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 14px 18px;
+    z-index: 200;
+    max-width: 360px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #ccc;
+    pointer-events: none;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  }
+  #tooltip h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  #tooltip .tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Filter bar */
+  #filter-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15,17,23,0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 10px 18px;
+    z-index: 100;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .filter-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #aaa;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .filter-btn.active { background: rgba(72,181,196,0.2); border-color: #48b5c4; color: #48b5c4; }
+  .filter-btn[data-filter="omg"].active { background: rgba(224,86,160,0.2); border-color: #e056a0; color: #e056a0; }
+
+  /* Controls hint */
+  #controls-hint {
+    position: fixed;
+    bottom: 70px;
+    right: 16px;
+    font-size: 11px;
+    color: #555;
+    z-index: 100;
+    text-align: right;
+  }
+</style>
+</head>
+<body>
+
+<div id="title-bar">
+  <h1>System Map Wijk Rubroek</h1>
+  <p>Pulse — Agis Fase 2 — Intergenerationele co-creatieve ruimte</p>
+</div>
+
+<div id="legend">
+  <h3>Legenda</h3>
+  <div class="legend-item"><div class="legend-dot" style="background: linear-gradient(135deg,#e94560,#c0392b); border: 2px solid #e94560;"></div><span>Centraal concept</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1f6f8b; border: 2px solid #2e86c1;"></div><span>Kernactoren (bewoners)</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8e44ad; border: 2px solid #af7ac5;"></div><span>Pulse-coalitie</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1e8040; border: 2px solid #27ae60;"></div><span>Organisaties Rubroek</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#9b2d72; border: 2px solid #e056a0;"></div><span>Organisaties omgeving</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#c0392b; border: 2px solid #e74c3c;"></div><span>Kernwaarden</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#af601a; border: 2px solid #e67e22;"></div><span>Thema's / Onderwerpen</span></div>
+</div>
+
+<div id="controls-hint">
+  Slepen om te pannen<br>Scrollen om te zoomen<br>Klik op een node voor verbindingen
+</div>
+
+<div id="filter-bar">
+  <button class="filter-btn active" data-filter="all">Alles</button>
+  <button class="filter-btn" data-filter="actor">Bewoners</button>
+  <button class="filter-btn" data-filter="pulse">Pulse-coalitie</button>
+  <button class="filter-btn" data-filter="org">Org. Rubroek</button>
+  <button class="filter-btn" data-filter="omg">Org. omgeving</button>
+  <button class="filter-btn" data-filter="waarde">Kernwaarden</button>
+  <button class="filter-btn" data-filter="thema">Thema's</button>
+</div>
+
+<div id="tooltip"></div>
+
+<div id="bg-map"></div>
+
+<div id="canvas-container">
+  <svg id="lines-svg"></svg>
+  <div id="world"></div>
+</div>
+
+<script>
+// ========== DATA ==========
+const nodes = [
+  // CENTER
+  { id: 'center', label: 'Intergenerationele\nCo-creatieve Ruimte\nRubroek (Pulse)', type: 'center', x: 960, y: 580,
+    desc: 'Het centrale concept: een fysieke plek binnen/om Laurens Rubroek waar jongeren en ouderen samen ontwerpen, ontmoeten en activiteiten ondernemen.' },
+
+  // KERNACTOREN (binnenring)
+  { id: 'ouderen', label: 'Ouderen\nbewonders', type: 'actor', x: 760, y: 400,
+    desc: 'Ouderen in verpleeghuizen, vaak afhankelijk van zorg en sociale interactie. Behoefte aan aandacht, verbinding en passende ondersteuning. Mede-ontwerpers van Pulse.' },
+  { id: 'jongeren', label: 'Jongeren\nbewoners', type: 'actor', x: 1160, y: 400,
+    desc: 'Jongeren met mentale gezondheidsuitdagingen: eenzaamheid, prestatiedruk en onzekerheid over de toekomst. Baat bij herkenning, steun en laagdrempelige hulpverlening.' },
+  { id: 'zorgprof', label: 'Zorg-\nprofessionals', type: 'actor', x: 760, y: 760,
+    desc: 'Zorgprofessionals en welzijnswerkers die kwetsbare ouderen en jongeren begeleiden. Groeiende werkdruk en emotionele belasting. Samen op zoek naar nieuwe oplossingsrichtingen.' },
+  { id: 'beleidsmakers', label: 'Beleidsmakers', type: 'actor', x: 1160, y: 760,
+    desc: 'Creëren kaders en voorzieningen om een inclusieve samenleving te realiseren. Effectief beleid vraagt om samenwerking en oog voor de menselijke maat.' },
+
+  // PULSE-COALITIE
+  { id: 'laurens', label: 'Laurens\n(praktijklocatie)', type: 'pulse', x: 580, y: 480,
+    desc: 'Grote ouderenzorgorganisatie in Rotterdam. Biedt praktijkervaring, pilotlocaties en betrokken professionals om samen met ouderen te experimenteren in de dagelijkse zorg.' },
+  { id: 'jongorg', label: 'Jongeren-\norganisaties\nRotterdam', type: 'pulse', x: 1340, y: 520,
+    desc: 'Jongerenwerkers in Rotterdam. Zorgen voor verbinding met jongeren uit diverse achtergronden en brengen kennis van informele ondersteuning en mentale gezondheid in.' },
+  { id: 'designteam', label: 'Design team\n(Karabijn, SLK,\nStichting &)', type: 'pulse', x: 960, y: 720,
+    desc: 'Samenwerkingsverband van Karabijn (netwerkregie), Studio Laura Koenen (social design) en Stichting & (projectuitvoering). Regisseert Pulse, begeleidt de ontwerpprocessen en draagt zorg voor uitvoering.' },
+  { id: 'gemeente', label: 'Gemeente\nRotterdam', type: 'pulse', x: 540, y: 680,
+    desc: 'Het Wmo-beleid vormt het beleidskader én een potentiële opschalingspartner. Via deze lijn verkennen we hoe inzichten doorwerken naar structurele gemeentelijke ondersteuning.' },
+
+  // ORGANISATIES OMGEVING (buiten de wijk Rubroek)
+  { id: 'dock', label: 'DOCK\nKralingen-Crooswijk', type: 'omg', x: 180, y: 620,
+    desc: 'Welzijnsorganisatie actief in buurtbemiddeling, jongerenwerk, sociale participatie, (school)maatschappelijk werk, opvoedondersteuning en ouderenzorg. Werkt samen met Aafje en Vrijwilligerswinkel.' },
+  // ORGANISATIES RUBROEK (in de wijk)
+  { id: 'debron', label: 'Wijkgebouw\nDe Bron', type: 'org', x: 180, y: 770,
+    desc: 'Al meer dan 20 jaar het kloppend hart van wijk Rubroek. Zowel buurthuis als gastvrije kerk aan de Vondelweg 254. Ontmoetingsplek, activiteiten en verbinding voor alle wijkbewoners.' },
+  { id: 'group', label: 'gro-up\nbuurtwerk', type: 'omg', x: 340, y: 890,
+    desc: 'Actief in Huizen van de Wijk in Rotterdam. Werkt aan leefbaarheid, gezondheid en verbinding in buurten. Organiseert activiteiten, digitale vaardigheden en buurtinitiatieven.' },
+  { id: 'sor', label: 'SOR\n(Stichting Ouderen-\nhuisvesting Rotterdam)', type: 'org', x: 550, y: 900,
+    desc: 'Woningcorporatie gespecialiseerd in huisvesting voor 55-plussers. Circa 7.800 seniorenwoningen verspreid over 57 gebouwen, waaronder in Rubroek. Opgericht in 1986.' },
+  { id: 'havensteder', label: 'Havensteder', type: 'omg', x: 760, y: 940,
+    desc: 'Woningcorporatie in de Rotterdamse regio. Verhuurt, beheert en onderhoudt meer dan 45.000 woningen, waaronder in Rubroek. Actief partner voor leefbaarheid in de wijk.' },
+  { id: 'aafje', label: 'Aafje\n(wijkverpleging)', type: 'omg', x: 960, y: 940,
+    desc: 'Organisatie voor thuiszorg en wijkverpleging. Werkt samen met DOCK en Vrijwilligerswinkel in het sociale netwerk van Kralingen-Crooswijk.' },
+  { id: 'buurtzorgt', label: 'BuurtzorgT\nKralingen-Crooswijk', type: 'omg', x: 1160, y: 920,
+    desc: 'GGZ-team bestaande uit psychiater, gz-psycholoog, verpleegkundig specialist en andere zorgprofessionals. Actief in Kralingen-Crooswijk sinds 2013.' },
+  { id: 'jip', label: 'JIP Rotterdam\n(Jongeren\nInformatiePunt)', type: 'omg', x: 1380, y: 880,
+    desc: 'Jongeren Informatie Punt aan de Schuttersweg 76 in Crooswijk. Biedt informatie, advies en ondersteuning voor jongeren op gebied van school, werk, geld en welzijn.' },
+  { id: 'moskee', label: 'Moskee Othman\n& religieuze\ngemeenschappen', type: 'org', x: 1540, y: 760,
+    desc: 'Moskee Othman en andere religieuze gemeenschappen in Rubroek. Belangrijke ontmoetingsplekken en informele zorgnetwerken voor diverse bewoners.' },
+  { id: 'vrijwilligers', label: 'Vrijwilligers-\nwinkel Rotterdam', type: 'omg', x: 1540, y: 600,
+    desc: 'Verbindt vrijwilligers aan organisaties in Rotterdam. Onderdeel van het sociaal netwerk in Kralingen-Crooswijk, samen met DOCK en Aafje.' },
+  { id: 'akc', label: 'Agenda Kralingen-\nCrooswijk (AKC)', type: 'omg', x: 1540, y: 440,
+    desc: 'Bewonersplatform en samenwerkingsverband van bewoners en organisaties in Kralingen-Crooswijk. Signaleert, verbindt en agendeert wijkthema\'s.' },
+
+  // KERNWAARDEN
+  { id: 'kw_gelijk', label: 'Gelijkwaardigheid', type: 'waarde', x: 550, y: 180,
+    desc: 'Tussen jong en oud: iedereen is mede-ontwerper, niet alleen "cli\u00ebnt" of "vrijwilliger".' },
+  { id: 'kw_verbinding', label: 'Verbinding &\nWederkerigheid', type: 'waarde', x: 740, y: 180,
+    desc: 'Niet "helpen" als \u00e9\u00e9nrichtingsverkeer, maar samen maken en doen.' },
+  { id: 'kw_veerkracht', label: 'Veerkracht &\nMentaal welzijn', type: 'waarde', x: 930, y: 150,
+    desc: 'Ruimte om met stress, verlies en toekomstvragen om te gaan.' },
+  { id: 'kw_veiligheid', label: 'Veiligheid &\nVertrouwen', type: 'waarde', x: 1120, y: 150,
+    desc: 'Fysiek, sociaal en psychologisch: je mag jezelf zijn.' },
+  { id: 'kw_inclusie', label: 'Toegankelijkheid\n& Inclusie', type: 'waarde', x: 1300, y: 180,
+    desc: 'Universal design, aandacht voor diverse achtergronden, genders, leeftijden.' },
+  { id: 'kw_eigenaar', label: 'Eigen regie &\nEigenaarschap', type: 'waarde', x: 1470, y: 220,
+    desc: 'Bewoners en jongeren beslissen mee over ruimte, regels en programma.' },
+  { id: 'kw_leren', label: 'Leren &\nExperiment', type: 'waarde', x: 1580, y: 320,
+    desc: 'Ontwerpende aanpak: fouten mogen gemaakt worden, labs als leeromgeving.' },
+
+  // THEMATISCHE KNOPEN (zonder "beleid, financiering & opschaling")
+  { id: 'th_eenzaam', label: 'Eenzaamheid', type: 'thema', x: 400, y: 120,
+    desc: 'Ouderen in verpleeghuis + zelfstandig wonend; jongeren met mentale druk. Gedeelde ervaring die generaties verbindt.' },
+  { id: 'th_mentaal', label: 'Mentale\nveerkracht\njongeren', type: 'thema', x: 200, y: 160,
+    desc: 'Stress, prestatiedruk, toekomstonzekerheid bij jongeren in Rubroek.' },
+  { id: 'th_informeel', label: 'Informele zorg /\nburennetwerken', type: 'thema', x: 140, y: 300,
+    desc: 'Netwerken rond formele zorg die professionals ontlasten.' },
+  { id: 'th_fysiek', label: 'Fysieke & sociale\ntoegankelijkheid', type: 'thema', x: 140, y: 440,
+    desc: 'Routes, drempels, sociale codes die bepalen wie er komt en wie niet. Dichte stedelijke bebouwing, veel steen.' },
+  { id: 'th_ruimte', label: 'Intergenerationele\nontmoetingsruimte', type: 'thema', x: 960, y: 380,
+    desc: 'De nieuwe co-creatieve ruimte binnen/om Laurens Rubroek.' },
+  { id: 'th_progr', label: 'Programmering\n& activiteiten', type: 'thema', x: 1200, y: 280,
+    desc: 'Creatieve sessies, dagelijkse ontmoetingen, wijkprojecten.' },
+];
+
+// EDGES
+const edges = [
+  // Bewoners naar center
+  { from: 'ouderen', to: 'center', label: 'behoefte\nontmoeting', color: '#2e86c1' },
+  { from: 'jongeren', to: 'center', label: 'behoefte\nontmoeting', color: '#2e86c1' },
+  { from: 'zorgprof', to: 'center', label: 'ontlasting\ndoor informeel', color: '#2e86c1' },
+  { from: 'ouderen', to: 'zorgprof', label: 'afhankelijkheid\nzorg, eenzaamheid', color: '#2e86c1' },
+  { from: 'jongeren', to: 'jongorg', label: 'mentale druk,\nzingeving', color: '#af7ac5' },
+
+  // Pulse-coalitie naar center
+  { from: 'laurens', to: 'center', label: 'locatie +\nbewoners', color: '#af7ac5' },
+  { from: 'jongorg', to: 'center', label: 'jongeren-\nperspectief', color: '#af7ac5' },
+  { from: 'designteam', to: 'center', label: 'regie, design\n& uitvoering', color: '#af7ac5' },
+  { from: 'gemeente', to: 'center', label: 'beleidskader\n& opschaling', color: '#af7ac5' },
+  { from: 'beleidsmakers', to: 'center', label: 'kaders &\nvoorzieningen', color: '#2e86c1' },
+  { from: 'beleidsmakers', to: 'gemeente', label: 'beleid &\nfinanciering', color: '#2e86c188' },
+  // Organisaties Rubroek — verbindingen
+  // DOCK (omgeving)
+  { from: 'dock', to: 'center', label: 'welzijn,\njongerenwerk,\nouderenzorg', color: '#e056a0' },
+  { from: 'dock', to: 'aafje', label: 'samenwerkings-\nnetwerk', color: '#e056a0' },
+  { from: 'dock', to: 'vrijwilligers', label: 'samenwerkings-\nnetwerk', color: '#e056a0' },
+  { from: 'dock', to: 'jongeren', label: 'jongerenwerk &\nYouth Hubs', color: '#e056a0' },
+
+  // De Bron
+  { from: 'debron', to: 'center', label: 'hart van\nde wijk', color: '#27ae60' },
+  { from: 'debron', to: 'ouderen', label: 'ontmoeting\n& activiteiten', color: '#27ae60' },
+  { from: 'debron', to: 'group', label: 'buurtactiviteiten\nin De Bron', color: '#27ae60' },
+
+  // gro-up (omgeving)
+  { from: 'group', to: 'center', label: 'buurtwerk &\nHuis van de Wijk', color: '#e056a0' },
+  { from: 'group', to: 'jongeren', label: 'activiteiten\n& verbinding', color: '#e056a0' },
+
+  // Woningcorporaties
+  { from: 'sor', to: 'ouderen', label: 'senioren-\nhuisvesting', color: '#27ae60' },
+  { from: 'sor', to: 'laurens', label: 'SOR-woningen\nbij Laurens', color: '#27ae60' },
+  { from: 'havensteder', to: 'center', label: 'wonen &\nleefbaarheid', color: '#e056a0' },
+  { from: 'havensteder', to: 'ouderen', label: 'huurwoningen\nRubroek', color: '#e056a088' },
+
+  // Zorgorganisaties (omgeving)
+  { from: 'aafje', to: 'ouderen', label: 'wijkverpleging\nthuiszorg', color: '#e056a0' },
+  { from: 'aafje', to: 'zorgprof', label: 'deel van\nzorgnetwerk', color: '#e056a0' },
+  { from: 'buurtzorgt', to: 'zorgprof', label: 'GGZ-team\nin de wijk', color: '#e056a0' },
+  { from: 'buurtzorgt', to: 'jongeren', label: 'mentale\nzorg jongeren', color: '#e056a0' },
+
+  // Jongeren-organisaties (omgeving)
+  { from: 'jip', to: 'jongeren', label: 'informatie\n& advies', color: '#e056a0' },
+  { from: 'jip', to: 'jongorg', label: 'doorverwijzing\njongeren', color: '#e056a0' },
+
+  // Religieus & gemeenschap
+  { from: 'moskee', to: 'center', label: 'informele\nontmoeting &\ngemeenschap', color: '#27ae60' },
+  { from: 'moskee', to: 'ouderen', label: 'informeel\nzorgnetwerk', color: '#27ae6088' },
+
+  // Vrijwilligerswinkel (omgeving)
+  { from: 'vrijwilligers', to: 'center', label: 'verbindt\nvrijwilligers', color: '#e056a0' },
+  { from: 'vrijwilligers', to: 'jongeren', label: 'vrijwilligers-\nwerk jongeren', color: '#e056a088' },
+
+  // AKC (omgeving)
+  { from: 'akc', to: 'center', label: 'bewoners-\nplatform', color: '#e056a0' },
+  { from: 'akc', to: 'dock', label: 'signalering &\nagendering', color: '#e056a0' },
+
+  // Kernwaarden naar center
+  { from: 'kw_gelijk', to: 'center', label: '', color: '#e74c3c55' },
+  { from: 'kw_verbinding', to: 'center', label: '', color: '#e74c3c55' },
+  { from: 'kw_veerkracht', to: 'center', label: '', color: '#e74c3c55' },
+  { from: 'kw_veiligheid', to: 'center', label: '', color: '#e74c3c55' },
+  { from: 'kw_inclusie', to: 'center', label: '', color: '#e74c3c55' },
+  { from: 'kw_eigenaar', to: 'center', label: '', color: '#e74c3c55' },
+  { from: 'kw_leren', to: 'center', label: '', color: '#e74c3c55' },
+
+  // Kernwaarden naar actoren
+  { from: 'kw_gelijk', to: 'ouderen', label: '', color: '#e74c3c33' },
+  { from: 'kw_gelijk', to: 'jongeren', label: '', color: '#e74c3c33' },
+  { from: 'kw_veerkracht', to: 'jongeren', label: '', color: '#e74c3c33' },
+  { from: 'kw_eigenaar', to: 'jongorg', label: '', color: '#e74c3c33' },
+  { from: 'kw_leren', to: 'designteam', label: '', color: '#e74c3c33' },
+
+  // Thema's
+  { from: 'th_eenzaam', to: 'ouderen', label: '', color: '#e67e2277' },
+  { from: 'th_eenzaam', to: 'jongeren', label: '', color: '#e67e2277' },
+  { from: 'th_mentaal', to: 'jongeren', label: '', color: '#e67e2277' },
+  { from: 'th_mentaal', to: 'buurtzorgt', label: '', color: '#e67e2255' },
+  { from: 'th_informeel', to: 'zorgprof', label: '', color: '#e67e2277' },
+  { from: 'th_informeel', to: 'dock', label: '', color: '#e67e2255' },
+  { from: 'th_informeel', to: 'debron', label: '', color: '#e67e2255' },
+  { from: 'th_fysiek', to: 'center', label: '', color: '#e67e2277' },
+  { from: 'th_fysiek', to: 'laurens', label: '', color: '#e67e2255' },
+  { from: 'th_ruimte', to: 'center', label: '', color: '#e67e22' },
+  { from: 'th_progr', to: 'center', label: '', color: '#e67e2277' },
+  { from: 'th_progr', to: 'designteam', label: '', color: '#e67e2255' },
+];
+
+// ========== RENDERING ==========
+const world = document.getElementById('world');
+const svg = document.getElementById('lines-svg');
+const tooltip = document.getElementById('tooltip');
+const container = document.getElementById('canvas-container');
+
+let scale = 0.68;
+let panX = 20;
+let panY = 10;
+let isDragging = false;
+let dragStartX, dragStartY;
+let selectedNode = null;
+let activeFilter = 'all';
+
+const nodeElements = {};
+
+// Create node elements
+nodes.forEach(n => {
+  const div = document.createElement('div');
+  div.className = `node node-${n.type}`;
+  div.dataset.id = n.id;
+  div.dataset.type = n.type;
+  div.innerHTML = n.label.replace(/\n/g, '<br>');
+  div.style.left = n.x + 'px';
+  div.style.top = n.y + 'px';
+  div.style.transform = 'translate(-50%, -50%)';
+  world.appendChild(div);
+  nodeElements[n.id] = div;
+
+  // Hover tooltip
+  div.addEventListener('mouseenter', (e) => {
+    const tagColors = {
+      center: '#e94560', actor: '#2e86c1', pulse: '#af7ac5',
+      org: '#27ae60', omg: '#e056a0', waarde: '#e74c3c', thema: '#e67e22'
+    };
+    const tagLabels = {
+      center: 'Centraal', actor: 'Kernactor', pulse: 'Pulse-coalitie',
+      org: 'Organisatie Rubroek', omg: 'Organisatie omgeving', waarde: 'Kernwaarde', thema: 'Thema'
+    };
+    tooltip.innerHTML = `<span class="tag" style="background:${tagColors[n.type]}22; color:${tagColors[n.type]}; border:1px solid ${tagColors[n.type]}55;">${tagLabels[n.type]}</span><h4>${n.label.replace(/\n/g, ' ')}</h4><p>${n.desc}</p>`;
+    tooltip.style.display = 'block';
+  });
+  div.addEventListener('mousemove', (e) => {
+    let tx = e.clientX + 16;
+    let ty = e.clientY + 16;
+    if (tx + 360 > window.innerWidth) tx = e.clientX - 370;
+    if (ty + 200 > window.innerHeight) ty = e.clientY - 210;
+    tooltip.style.left = tx + 'px';
+    tooltip.style.top = ty + 'px';
+  });
+  div.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+  // Click to highlight connections
+  div.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (selectedNode === n.id) {
+      selectedNode = null;
+      clearHighlight();
+    } else {
+      selectedNode = n.id;
+      highlightConnections(n.id);
+    }
+  });
+});
+
+container.addEventListener('click', () => {
+  selectedNode = null;
+  clearHighlight();
+});
+
+function highlightConnections(nodeId) {
+  const connected = new Set([nodeId]);
+  edges.forEach(e => {
+    if (e.from === nodeId) connected.add(e.to);
+    if (e.to === nodeId) connected.add(e.from);
+  });
+  Object.keys(nodeElements).forEach(id => {
+    if (connected.has(id)) {
+      nodeElements[id].classList.add('highlighted');
+      nodeElements[id].classList.remove('dimmed');
+    } else {
+      nodeElements[id].classList.add('dimmed');
+      nodeElements[id].classList.remove('highlighted');
+    }
+  });
+  drawEdges();
+}
+
+function clearHighlight() {
+  Object.keys(nodeElements).forEach(id => {
+    nodeElements[id].classList.remove('highlighted', 'dimmed');
+  });
+  drawEdges();
+}
+
+function drawEdges() {
+  const connectedEdges = new Set();
+  if (selectedNode) {
+    edges.forEach((e, i) => {
+      if (e.from === selectedNode || e.to === selectedNode) connectedEdges.add(i);
+    });
+  }
+
+  let svgContent = '';
+
+  edges.forEach((e, i) => {
+    const fromN = nodes.find(n => n.id === e.from);
+    const toN = nodes.find(n => n.id === e.to);
+    if (!fromN || !toN) return;
+
+    // Check filter
+    if (activeFilter !== 'all') {
+      const types = [fromN.type, toN.type];
+      if (!types.includes(activeFilter) && !types.includes('center')) return;
+    }
+
+    // Check if nodes are visible
+    const fromEl = nodeElements[e.from];
+    const toEl = nodeElements[e.to];
+    if (fromEl && fromEl.style.display === 'none') return;
+    if (toEl && toEl.style.display === 'none') return;
+
+    let opacity = 0.3;
+    let width = 1.2;
+    if (selectedNode) {
+      if (connectedEdges.has(i)) {
+        opacity = 0.9;
+        width = 2.5;
+      } else {
+        opacity = 0.04;
+      }
+    }
+
+    const color = e.color || '#666';
+    const x1 = fromN.x * scale + panX;
+    const y1 = fromN.y * scale + panY;
+    const x2 = toN.x * scale + panX;
+    const y2 = toN.y * scale + panY;
+
+    svgContent += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${width}" opacity="${opacity}" stroke-linecap="round"/>`;
+
+    // Edge label (only when selected and relevant)
+    if (e.label && (opacity > 0.5)) {
+      const mx = (x1 + x2) / 2;
+      const my = (y1 + y2) / 2;
+      const lines = e.label.split('\n');
+      lines.forEach((line, li) => {
+        svgContent += `<text x="${mx}" y="${my + li * 12 - (lines.length - 1) * 6}" text-anchor="middle" fill="#ccc" font-size="${10 * Math.min(scale + 0.3, 1)}" font-family="Inter, sans-serif" opacity="0.85">${line}</text>`;
+      });
+    }
+  });
+
+  svg.innerHTML = svgContent;
+}
+
+function updateTransform() {
+  world.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+  drawEdges();
+}
+
+// Pan
+container.addEventListener('mousedown', (e) => {
+  if (e.target.classList.contains('node')) return;
+  isDragging = true;
+  dragStartX = e.clientX - panX;
+  dragStartY = e.clientY - panY;
+});
+window.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  panX = e.clientX - dragStartX;
+  panY = e.clientY - dragStartY;
+  updateTransform();
+});
+window.addEventListener('mouseup', () => { isDragging = false; });
+
+// Zoom
+container.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? 0.92 : 1.08;
+  const newScale = Math.max(0.25, Math.min(2.5, scale * delta));
+  const rect = container.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  panX = mx - (mx - panX) * (newScale / scale);
+  panY = my - (my - panY) * (newScale / scale);
+  scale = newScale;
+  updateTransform();
+}, { passive: false });
+
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+
+    nodes.forEach(n => {
+      const el = nodeElements[n.id];
+      if (activeFilter === 'all' || n.type === activeFilter || n.type === 'center') {
+        el.style.display = '';
+      } else {
+        const isConnected = edges.some(e =>
+          (e.from === n.id && nodes.find(nn => nn.id === e.to)?.type === activeFilter) ||
+          (e.to === n.id && nodes.find(nn => nn.id === e.from)?.type === activeFilter) ||
+          (e.from === n.id && e.to === 'center') ||
+          (e.to === n.id && e.from === 'center')
+        );
+        el.style.display = isConnected || n.type === 'center' ? '' : 'none';
+      }
+    });
+    selectedNode = null;
+    clearHighlight();
+    drawEdges();
+  });
+});
+
+// ========== BACKGROUND MAP ==========
+const RUBROEK_LAT = 51.9270;
+const RUBROEK_LNG = 4.4910;
+const CENTER_X = 960;
+const CENTER_Y = 580;
+const M = 0.38; // meters per system-map pixel
+const DEG_LAT_M = 111000;
+const DEG_LNG_M = 68487; // at lat ~51.93
+
+const bgMap = L.map('bg-map', {
+  zoomControl: false,
+  attributionControl: false,
+  dragging: false,
+  scrollWheelZoom: false,
+  doubleClickZoom: false,
+  boxZoom: false,
+  keyboard: false,
+  touchZoom: false,
+  zoomSnap: 0,
+  zoomAnimation: false,
+  fadeAnimation: false,
+  markerZoomAnimation: false
+}).setView([RUBROEK_LAT, RUBROEK_LNG], 17);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  maxZoom: 20,
+  subdomains: 'abcd'
+}).addTo(bgMap);
+
+function syncMap() {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const cx = (vw / 2 - panX) / scale;
+  const cy = (vh / 2 - panY) / scale;
+  const lat = RUBROEK_LAT - (cy - CENTER_Y) * M / DEG_LAT_M;
+  const lng = RUBROEK_LNG + (cx - CENTER_X) * M / DEG_LNG_M;
+  const z = Math.log2(96589 * scale / M);
+  bgMap.setView([lat, lng], z, { animate: false });
+}
+
+// Patch updateTransform to sync the map
+const _origUpdateTransform = updateTransform;
+updateTransform = function() {
+  _origUpdateTransform();
+  syncMap();
+};
+
+// Initial render
+updateTransform();
+</script>
+</body>
+</html>
